@@ -1,0 +1,152 @@
+.hero {
+  text-align: center;
+  padding-top: 48px;
+
+  @media (min-width: 720px) {
+    padding-top: 80px;
+  }
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  color: var(--brand-primary);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 2.4rem;
+  line-height: 1.1;
+
+  @media (min-width: 720px) {
+    font-size: 3.4rem;
+  }
+}
+
+.accent {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  max-width: 52ch;
+  margin: 22px auto 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.cta-row {
+  margin-top: 32px;
+}
+
+.btn-lg {
+  padding: 16px 34px;
+  font-size: 1.05rem;
+}
+
+.timeline-preview {
+  margin-top: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  opacity: 0.85;
+}
+
+.chip {
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+
+  &.mystery {
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+  }
+}
+
+.arrow {
+  color: var(--text-faint);
+}
+
+.how-it-works,
+.modes {
+  margin-top: 72px;
+  text-align: center;
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 32px;
+  }
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+  text-align: left;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+}
+
+.step-index {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--brand-primary);
+}
+
+.steps h3 {
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+
+.steps p {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.mode-cards {
+  display: grid;
+  gap: 20px;
+  text-align: left;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mode-card {
+  padding: 24px;
+
+  h3 {
+    font-size: 1.15rem;
+  }
+
+  p {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+  }
+}

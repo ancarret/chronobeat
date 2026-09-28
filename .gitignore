@@ -1,0 +1,20 @@
+# Root-level ignores. backend/ and frontend/ have their own more specific .gitignore files.
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Machine-local Docker Compose port/volume overrides (see README "Local development")
+docker-compose.override.yml
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+
+# Scratch
+*.log

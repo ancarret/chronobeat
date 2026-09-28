@@ -1,0 +1,112 @@
+<div class="page setup">
+  <h1>Set up your game</h1>
+
+  <section class="field-group">
+    <h2>Mode</h2>
+    <div class="segmented">
+      <button type="button" [class.active]="mode() === 'SOLO'" (click)="setMode('SOLO')">Solo</button>
+      <button type="button" [class.active]="mode() === 'LOCAL_MULTIPLAYER'" (click)="setMode('LOCAL_MULTIPLAYER')">
+        Local multiplayer
+      </button>
+    </div>
+  </section>
+
+  <section class="field-group">
+    <h2>{{ mode() === 'SOLO' ? 'Your name' : 'Players' }}</h2>
+
+    @if (mode() === 'SOLO') {
+      <input
+        class="text-input"
+        type="text"
+        placeholder="You"
+        maxlength="60"
+        [ngModel]="playerNames()[0]"
+        (ngModelChange)="updatePlayerName(0, $event)"
+      />
+    } @else {
+      <div class="player-list">
+        @for (name of playerNames(); track $index) {
+          <div class="player-row">
+            <input
+              class="text-input"
+              type="text"
+              [placeholder]="'Player ' + ($index + 1)"
+              maxlength="60"
+              [ngModel]="name"
+              (ngModelChange)="updatePlayerName($index, $event)"
+            />
+            @if (playerNames().length > 2) {
+              <button type="button" class="btn-ghost icon-btn" (click)="removePlayer($index)" aria-label="Remove player">✕</button>
+            }
+          </div>
+        }
+      </div>
+      @if (playerNames().length < 8) {
+        <button type="button" class="btn btn-secondary add-player" (click)="addPlayer()">+ Add player</button>
+      }
+    }
+  </section>
+
+  <section class="field-group">
+    <h2>Region</h2>
+    <div class="chip-select">
+      @for (m of markets; track m.code) {
+        <button type="button" [class.active]="market() === m.code" (click)="market.set(m.code)">{{ m.label }}</button>
+      }
+    </div>
+  </section>
+
+  <section class="field-group">
+    <h2>Genre</h2>
+    <div class="chip-select">
+      <button type="button" [class.active]="genre() === null" (click)="genre.set(null)">All genres</button>
+      @for (g of genres; track g[0]) {
+        <button type="button" [class.active]="genre() === g[0]" (click)="genre.set(g[0])">{{ g[1] }}</button>
+      }
+    </div>
+  </section>
+
+  <section class="field-group">
+    <h2>Years</h2>
+    <div class="chip-select">
+      @for (decade of decades; track decade.label; let i = $index) {
+        <button type="button" [class.active]="decadeIndex() === i" (click)="decadeIndex.set(i)">{{ decade.label }}</button>
+      }
+    </div>
+  </section>
+
+  <section class="field-group">
+    <h2>Difficulty</h2>
+    <div class="segmented">
+      <button type="button" [class.active]="difficulty() === 'EASY'" (click)="difficulty.set('EASY')">Easy</button>
+      <button type="button" [class.active]="difficulty() === 'NORMAL'" (click)="difficulty.set('NORMAL')">Normal</button>
+      <button type="button" [class.active]="difficulty() === 'HARD'" (click)="difficulty.set('HARD')">Hard</button>
+    </div>
+  </section>
+
+  <section class="field-group two-col">
+    <div>
+      <h2>Lives</h2>
+      <input class="text-input" type="number" min="1" max="10" [ngModel]="maxLives()" (ngModelChange)="maxLives.set($event)" />
+    </div>
+    <div>
+      <h2>Round limit <span class="optional">optional</span></h2>
+      <input
+        class="text-input"
+        type="number"
+        min="1"
+        placeholder="Unlimited"
+        [ngModel]="maxRounds()"
+        (ngModelChange)="maxRounds.set($event || null)"
+      />
+    </div>
+  </section>
+
+  @if (error(); as err) {
+    <app-error-state title="Couldn't start the game" [message]="err.message" retryLabel="" />
+  }
+
+  <button type="button" class="btn btn-primary btn-lg start-btn" [disabled]="!canSubmit || submitting()" (click)="startGame()">
+    {{ submitting() ? 'Starting…' : 'Start game' }}
+  </button>
+</div>

@@ -1,0 +1,10 @@
+# Opt-in via SPRING_PROFILES_ACTIVE=local. The base application.yml already has
+# localhost-friendly defaults, so this profile only adds developer-convenience logging.
+logging:
+  level:
+    com.chronobeat: DEBUG
+
+management:
+  endpoint:
+    health:
+      show-details: always

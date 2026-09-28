@@ -1,0 +1,55 @@
+<div class="page game-page">
+  @switch (viewState()) {
+    @case ('loading') {
+      <app-loading-state message="Setting up your round…" />
+    }
+
+    @case ('error') {
+      <app-error-state
+        title="Couldn't load this game"
+        [message]="error()?.message ?? 'Please try again.'"
+        (retry)="retry()"
+      />
+    }
+
+    @case ('playing') {
+      @if (round(); as r) {
+        @if (game()?.mode === 'LOCAL_MULTIPLAYER') {
+          <p class="turn-indicator">{{ r.playerDisplayName }}'s turn</p>
+        }
+
+        @if (activePlayer(); as player) {
+          <app-score-panel [player]="player" [roundNumber]="r.roundNumber" />
+        }
+
+        <section class="mystery-card">
+          <div class="mystery-art" aria-hidden="true">
+            <span>?</span>
+          </div>
+          <h2>{{ r.anchorRound ? 'Listen — this starts your timeline' : 'Mystery song' }}</h2>
+          <app-audio-player [previewUrl]="r.previewUrl" [maxPlaySeconds]="r.previewPlaySeconds" />
+        </section>
+
+        <section class="timeline-section">
+          <h3>{{ r.anchorRound ? 'Your timeline' : 'Where does it belong?' }}</h3>
+          <app-timeline
+            [entries]="r.timeline"
+            [interactive]="!r.anchorRound"
+            [selectedPosition]="selectedPosition()"
+            (positionSelected)="selectPosition($event)"
+          />
+        </section>
+
+        <button type="button" class="btn btn-primary btn-lg submit-btn" [disabled]="!canSubmit || submitting()" (click)="submitAnswer()">
+          {{ submitting() ? 'Checking…' : r.anchorRound ? 'Start timeline' : 'Lock in answer' }}
+        </button>
+      }
+    }
+
+    @case ('revealed') {
+      @if (lastResult(); as result) {
+        <app-round-result [result]="result" [isGameOver]="isGameOver" (continue)="continueAfterReveal()" />
+      }
+    }
+  }
+</div>

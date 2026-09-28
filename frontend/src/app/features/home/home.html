@@ -1,0 +1,57 @@
+<section class="hero page">
+  <p class="eyebrow">A music chronology game</p>
+  <h1>
+    Hear it first.<br />
+    <span class="accent">Place it right.</span>
+  </h1>
+  <p class="tagline">
+    A mystery song plays. No title, no artist, no year. Slot it into your timeline before the reveal
+    &mdash; get it right and it stays. Build the longest timeline you can.
+  </p>
+  <div class="cta-row">
+    <a class="btn btn-primary btn-lg" routerLink="/play">Play {{ config.productName }}</a>
+  </div>
+
+  <div class="timeline-preview" aria-hidden="true">
+    <div class="chip">1977 &middot; Fleetwood Mac</div>
+    <div class="arrow">→</div>
+    <div class="chip mystery">? &middot; &hellip;</div>
+    <div class="arrow">→</div>
+    <div class="chip">2008 &middot; Coldplay</div>
+  </div>
+</section>
+
+<section class="how-it-works page">
+  <h2>How a round works</h2>
+  <ol class="steps">
+    <li>
+      <span class="step-index">01</span>
+      <h3>Listen</h3>
+      <p>A short preview plays. The song's title, artist and year stay hidden.</p>
+    </li>
+    <li>
+      <span class="step-index">02</span>
+      <h3>Place it</h3>
+      <p>Drop it into your timeline where you think it chronologically belongs.</p>
+    </li>
+    <li>
+      <span class="step-index">03</span>
+      <h3>Reveal</h3>
+      <p>Get it right and it joins your timeline permanently, making the next round harder.</p>
+    </li>
+  </ol>
+</section>
+
+<section class="modes page">
+  <h2>Two ways to play</h2>
+  <div class="mode-cards">
+    <div class="card mode-card">
+      <h3>Solo</h3>
+      <p>Build the longest timeline you can before you run out of lives.</p>
+    </div>
+    <div class="card mode-card">
+      <h3>Local multiplayer</h3>
+      <p>Pass the device around. Everyone builds their own timeline, same device, same songs.</p>
+    </div>
+  </div>
+</section>

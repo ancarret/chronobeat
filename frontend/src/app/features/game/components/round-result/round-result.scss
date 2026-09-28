@@ -1,0 +1,97 @@
+.reveal-card {
+  padding: 28px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-align: center;
+  animation: pop-in 0.25s ease;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.correct .badge {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.incorrect .badge {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.song {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.artwork {
+  width: 140px;
+  height: 140px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  box-shadow: var(--shadow-md);
+}
+
+.artwork-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  font-size: 2.4rem;
+  background: var(--bg-elevated);
+}
+
+.song-meta {
+  .year {
+    font-family: var(--font-display);
+    color: var(--brand-primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+    margin-top: 4px;
+  }
+
+  p {
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+}
+
+.feedback {
+  margin-top: 20px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.continue-btn {
+  width: 100%;
+  margin-top: 24px;
+}

@@ -1,0 +1,44 @@
+.score-panel {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.value.name {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.lives {
+  margin-left: auto;
+}
+
+.hearts {
+  display: flex;
+  gap: 3px;
+  color: var(--danger);
+  font-size: 1rem;
+}

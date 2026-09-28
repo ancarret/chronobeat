@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: chronobeat-backend
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/chronobeat}
+    username: ${DATABASE_USERNAME:chronobeat}
+    password: ${DATABASE_PASSWORD:chronobeat}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+# Every property below has a typed home in com.chronobeat.config.*Properties.
+chronobeat:
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:4200}
+  admin:
+    ingest-key: ${ADMIN_INGEST_KEY:local-dev-key}
+  music:
+    apple:
+      base-url: ${APPLE_API_BASE_URL:https://itunes.apple.com}
+      connect-timeout-millis: 5000
+      read-timeout-millis: 8000
+      min-request-interval-millis: 400
+      max-results-per-query: 50
+  game:
+    default-max-lives: 3
+    base-points-per-correct: 100
+    streak-bonus-per-level: 10
+    max-streak-bonus-level: 10
+    preview-play-seconds: 12
+    recent-artist-avoidance-window: 3
+
+logging:
+  level:
+    com.chronobeat: INFO
+    org.flywaydb: INFO

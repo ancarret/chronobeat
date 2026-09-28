@@ -1,0 +1,49 @@
+<audio
+  #audioEl
+  [src]="previewUrl()"
+  preload="metadata"
+  (timeupdate)="onTimeUpdate()"
+  (ended)="onEnded()"
+  (error)="onError()"
+></audio>
+
+@if (loadError()) {
+  <div class="player-error">
+    <p>Preview unavailable for this track. You can still place it from memory, or skip ahead.</p>
+  </div>
+} @else {
+  <div class="player">
+    <button
+      type="button"
+      class="play-btn"
+      [class.playing]="isPlaying()"
+      (click)="toggle()"
+      [attr.aria-label]="isPlaying() ? 'Pause preview' : 'Play preview'"
+    >
+      @if (!isPlaying()) {
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+        </svg>
+      }
+    </button>
+
+    <div class="track">
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="progress() * 100"></div>
+      </div>
+      <span class="hint">{{ hasPlayed() ? 'Mystery track' : 'Tap play to listen' }}</span>
+    </div>
+
+    <button type="button" class="replay-btn" (click)="replay()" aria-label="Replay from the start">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path
+          d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+        />
+      </svg>
+    </button>
+  </div>
+}

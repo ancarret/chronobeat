@@ -1,0 +1,22 @@
+<div class="score-panel">
+  <div class="stat">
+    <span class="label">Player</span>
+    <span class="value name">{{ player().displayName }}</span>
+  </div>
+  <div class="stat">
+    <span class="label">Score</span>
+    <span class="value">{{ player().score }}</span>
+  </div>
+  <div class="stat">
+    <span class="label">Streak</span>
+    <span class="value">{{ player().currentStreak }}</span>
+  </div>
+  <div class="stat lives">
+    <span class="label">Lives</span>
+    <span class="value hearts">
+      @for (i of livesArray(); track $index) {
+        <span class="heart">♥</span>
+      }
+    </span>
+  </div>
+</div>

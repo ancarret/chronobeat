@@ -1,0 +1,22 @@
+# Activate with SPRING_PROFILES_ACTIVE=prod. No localhost fallbacks here on purpose:
+# the app should fail fast at startup if a required secret/URL wasn't configured,
+# rather than silently connecting to the wrong place.
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+chronobeat:
+  cors:
+    allowed-origins: ${FRONTEND_URL}
+  admin:
+    ingest-key: ${ADMIN_INGEST_KEY}
+
+logging:
+  level:
+    com.chronobeat: INFO
+    org.springframework.web: WARN

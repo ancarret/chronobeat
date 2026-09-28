@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: chronobeat-db
+    environment:
+      POSTGRES_DB: chronobeat
+      POSTGRES_USER: chronobeat
+      POSTGRES_PASSWORD: chronobeat
+    ports:
+      - "5432:5432"
+    volumes:
+      - chronobeat-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chronobeat -d chronobeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: chronobeat-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/chronobeat
+      DATABASE_USERNAME: chronobeat
+      DATABASE_PASSWORD: chronobeat
+      FRONTEND_URL: http://localhost:4200
+      ADMIN_INGEST_KEY: local-dev-key
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: chronobeat-frontend
+    depends_on:
+      - backend
+    environment:
+      # Regenerated into env.js at container startup - the browser calls the
+      # backend directly, so this must be reachable from the host, not just
+      # from inside the Docker network (hence localhost:8080, not http://backend:8080).
+      API_BASE_URL: http://localhost:8080
+    ports:
+      - "4200:80"
+
+volumes:
+  chronobeat-db-data:
