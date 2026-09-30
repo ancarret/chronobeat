@@ -1,5 +1,6 @@
 package com.chronobeat.controller;
 
+import com.chronobeat.domain.Profile;
 import com.chronobeat.dto.game.AnswerRequest;
 import com.chronobeat.dto.game.CreateGameRequest;
 import com.chronobeat.dto.game.GameResponse;
@@ -9,6 +10,7 @@ import com.chronobeat.dto.game.RoundResultResponse;
 import com.chronobeat.dto.game.StartGameResponse;
 import com.chronobeat.dto.game.TimelineEntryResponse;
 import com.chronobeat.service.GameService;
+import com.chronobeat.service.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,15 +31,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class GameController {
 
     private final GameService gameService;
+    private final ProfileService profileService;
 
-    public GameController(GameService gameService) {
+    public GameController(GameService gameService, ProfileService profileService) {
         this.gameService = gameService;
+        this.profileService = profileService;
     }
 
     @PostMapping("/api/games")
-    @Operation(summary = "Create a new game (solo or local multiplayer) in CREATED status")
-    public ResponseEntity<GameResponse> createGame(@Valid @RequestBody CreateGameRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(gameService.createGame(request));
+    @Operation(summary = "Create a new game (solo or local multiplayer) in CREATED status",
+            description = "Send X-Profile-Token to have the game count towards that profile's records. "
+                    + "An unknown or missing token simply makes it a guest game.")
+    public ResponseEntity<GameResponse> createGame(
+            @RequestHeader(value = ProfileController.TOKEN_HEADER, required = false) String profileToken,
+            @Valid @RequestBody CreateGameRequest request) {
+        Profile profile = profileService.findByToken(profileToken).orElse(null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(gameService.createGame(request, profile));
     }
 
     @GetMapping("/api/games/{gameId}")

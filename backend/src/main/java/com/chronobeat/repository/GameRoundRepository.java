@@ -23,4 +23,15 @@ public interface GameRoundRepository extends JpaRepository<GameRound, UUID> {
 
     @Query("select r.song.artist from GameRound r where r.gamePlayer.id = :gamePlayerId order by r.roundNumber desc")
     List<String> findArtistHistoryByGamePlayerId(UUID gamePlayerId);
+
+    @Query("""
+            select new com.chronobeat.repository.RoundOutcomeCount(
+                coalesce(s.canonicalReleaseYear, s.releaseYear), s.genre, r.correct, count(r))
+            from GameRound r join r.song s
+            where r.gamePlayer.profile.id = :profileId
+              and r.anchorRound = false
+              and r.status = com.chronobeat.domain.RoundStatus.RESOLVED
+            group by coalesce(s.canonicalReleaseYear, s.releaseYear), s.genre, r.correct
+            """)
+    List<RoundOutcomeCount> outcomeCountsForProfile(UUID profileId);
 }

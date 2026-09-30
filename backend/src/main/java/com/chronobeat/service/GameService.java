@@ -8,6 +8,7 @@ import com.chronobeat.domain.GamePlayer;
 import com.chronobeat.domain.GameRound;
 import com.chronobeat.domain.GameSettings;
 import com.chronobeat.domain.GameStatus;
+import com.chronobeat.domain.Profile;
 import com.chronobeat.domain.RoundStatus;
 import com.chronobeat.domain.Song;
 import com.chronobeat.domain.TimelineEntry;
@@ -17,6 +18,7 @@ import com.chronobeat.dto.game.GameResponse;
 import com.chronobeat.dto.game.GameResultsResponse;
 import com.chronobeat.dto.game.GameSettingsRequest;
 import com.chronobeat.dto.game.PlayerResponse;
+import com.chronobeat.dto.game.RecordsBrokenResponse;
 import com.chronobeat.dto.game.RoundPendingResponse;
 import com.chronobeat.dto.game.RoundResultResponse;
 import com.chronobeat.dto.game.StartGameResponse;
@@ -53,6 +55,7 @@ public class GameService {
     private final ScoringService scoringService;
     private final GameMapper gameMapper;
     private final GameProperties gameProperties;
+    private final ProfileStatsService profileStatsService;
 
     public GameService(
             GameRepository gameRepository,
@@ -61,7 +64,9 @@ public class GameService {
             TimelineValidationService timelineValidationService,
             ScoringService scoringService,
             GameMapper gameMapper,
-            GameProperties gameProperties) {
+            GameProperties gameProperties,
+            ProfileStatsService profileStatsService) {
+        this.profileStatsService = profileStatsService;
         this.gameRepository = gameRepository;
         this.gameRoundRepository = gameRoundRepository;
         this.songSelectionService = songSelectionService;
@@ -73,7 +78,14 @@ public class GameService {
 
     @Transactional
     public GameResponse createGame(CreateGameRequest request) {
+        return createGame(request, null);
+    }
+
+    /** @param profile the authenticated caller, or null for a guest game whose results aren't tracked */
+    @Transactional
+    public GameResponse createGame(CreateGameRequest request, Profile profile) {
         validatePlayerCountForMode(request.mode(), request.playerNames());
+        int profileIndex = profileIndexFor(request, profile);
 
         GameSettingsRequest settingsRequest = request.settings();
         int maxLives = settingsRequest.maxLives() != null ? settingsRequest.maxLives() : gameProperties.getDefaultMaxLives();
@@ -85,13 +97,33 @@ public class GameService {
         Game game = new Game(request.mode(), settings);
         int order = 0;
         for (String name : request.playerNames()) {
-            game.addPlayer(new GamePlayer(name.trim(), order++, maxLives));
+            GamePlayer player = new GamePlayer(name.trim(), order, maxLives);
+            if (order == profileIndex) {
+                player.linkProfile(profile);
+            }
+            game.addPlayer(player);
+            order++;
         }
         // saveAndFlush (not save): @CreationTimestamp/@UpdateTimestamp are only populated
         // on the in-memory entity once the insert actually flushes, and we map the
         // response from this same instance immediately afterward.
         gameRepository.saveAndFlush(game);
         return gameMapper.toGameResponse(game);
+    }
+
+    /** Index of the player that belongs to {@code profile}, or -1 when the game is a guest game. */
+    private int profileIndexFor(CreateGameRequest request, Profile profile) {
+        if (profile == null) {
+            return -1;
+        }
+        Integer requested = request.profilePlayerIndex();
+        if (requested == null) {
+            return request.mode() == GameMode.SOLO ? 0 : -1;
+        }
+        if (requested >= request.playerNames().size()) {
+            throw new InvalidGameStateException("profilePlayerIndex must refer to one of the " + request.playerNames().size() + " players");
+        }
+        return requested;
     }
 
     private void validatePlayerCountForMode(GameMode mode, List<String> names) {
@@ -263,8 +295,12 @@ public class GameService {
         }
         List<PlayerResponse> players = game.getPlayers().stream().map(gameMapper::toPlayerResponse).toList();
         GamePlayer winner = game.getPlayers().stream().max(Comparator.comparingInt(GamePlayer::getScore)).orElse(null);
+        List<RecordsBrokenResponse> records = game.getPlayers().stream()
+                .map(profileStatsService::recordsBrokenBy)
+                .filter(java.util.Objects::nonNull)
+                .toList();
         return new GameResultsResponse(
-                game.getId(), game.getStatus(), game.getCurrentRoundNumber(), players, winner != null ? winner.getId() : null);
+                game.getId(), game.getStatus(), game.getCurrentRoundNumber(), players, winner != null ? winner.getId() : null, records);
     }
 
     private void insertIntoTimeline(GamePlayer player, Song song, int position, int roundNumber) {

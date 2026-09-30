@@ -28,6 +28,11 @@ public class GamePlayer {
     @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
+    /** Null for guests, i.e. players typed in by name on a shared device. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id")
+    private Profile profile;
+
     @Column(name = "display_name", nullable = false, length = 60)
     private String displayName;
 
@@ -68,6 +73,14 @@ public class GamePlayer {
 
     void assignToGame(Game game) {
         this.game = game;
+    }
+
+    public void linkProfile(Profile profile) {
+        this.profile = profile;
+    }
+
+    public Profile getProfile() {
+        return profile;
     }
 
     public boolean isEliminated() {
