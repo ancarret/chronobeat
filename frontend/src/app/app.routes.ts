@@ -10,6 +10,18 @@ export const routes: Routes = [
     loadComponent: () => import('./features/game-setup/game-setup').then((m) => m.GameSetup),
   },
   {
+    path: 'join',
+    loadComponent: () => import('./features/join/join').then((m) => m.Join),
+  },
+  {
+    path: 'join/:code',
+    loadComponent: () => import('./features/join/join').then((m) => m.Join),
+  },
+  {
+    path: 'room/:gameId',
+    loadComponent: () => import('./features/lobby/lobby').then((m) => m.Lobby),
+  },
+  {
     path: 'game/:gameId',
     loadComponent: () => import('./features/game/game').then((m) => m.Game),
   },

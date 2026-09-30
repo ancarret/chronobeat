@@ -1,0 +1,255 @@
+.lobby-page {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.lobby-head {
+  text-align: center;
+
+  h1 {
+    margin-top: 6px;
+    font-size: 2rem;
+  }
+}
+
+.code-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 28px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glow-violet);
+
+  @media (min-width: 600px) {
+    flex-direction: row;
+    justify-content: center;
+    gap: 36px;
+  }
+}
+
+.code-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.code {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 12vw, 4.4rem);
+  line-height: 1;
+  letter-spacing: 0.22em;
+  padding-left: 0.22em; // balances the trailing letter-spacing so the code looks centred
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  user-select: all;
+}
+
+.code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.82rem;
+  }
+}
+
+.rules {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    padding: 5px 13px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+}
+
+.players-card {
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+
+  h2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  .count {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-faint);
+  }
+}
+
+.players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    animation: arrive 0.4s var(--ease-out) both;
+
+    &:first-child {
+      border-top: none;
+    }
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-gradient);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 107, 74, 0.16);
+  color: var(--brand-primary);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  &.host {
+    background: rgba(139, 92, 246, 0.2);
+    color: #b79bff;
+  }
+}
+
+.presence {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--text-faint);
+  }
+
+  &.on {
+    color: var(--success);
+
+    &::before {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+  }
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--danger);
+  }
+}
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  .btn-lg {
+    width: 100%;
+
+    @media (min-width: 600px) {
+      width: auto;
+      min-width: 280px;
+    }
+  }
+}
+
+.waiting-note {
+  color: var(--text-muted);
+  padding: 12px 0;
+}
+
+.form-error {
+  text-align: center;
+  color: var(--danger);
+  font-size: 0.88rem;
+}
+
+.back {
+  display: flex;
+  justify-content: center;
+}

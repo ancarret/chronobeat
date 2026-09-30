@@ -1,5 +1,5 @@
-<div class="page game-page">
-  @switch (viewState()) {
+<div class="page page-wide game-page">
+  @switch (screen()) {
     @case ('loading') {
       <app-loading-state message="Setting up your round…" />
     }
@@ -12,14 +12,49 @@
       />
     }
 
-    @case ('playing') {
+    @case ('pass') {
       @if (round(); as r) {
-        @if (game()?.mode === 'LOCAL_MULTIPLAYER') {
-          <p class="turn-indicator">{{ r.playerDisplayName }}'s turn</p>
+        <section class="interstitial">
+          <app-vinyl [size]="120" mark="♪" />
+          <p class="eyebrow">Pass the device</p>
+          <h1>{{ r.playerDisplayName }}, you're up</h1>
+          <p class="lede">
+            @if (isShared()) {
+              Everyone hears the same song. Place it on your own timeline without letting the others peek.
+            } @else {
+              A song is waiting for you. The others can look away.
+            }
+          </p>
+          <button type="button" class="btn btn-primary btn-lg" (click)="acknowledgeTurn()">I'm {{ r.playerDisplayName }} — let's go</button>
+        </section>
+        @if (game(); as g) {
+          <app-player-strip [players]="g.players" [target]="target()" [viewerId]="r.playerId" />
+        }
+      }
+    }
+
+    @case ('answering') {
+      @if (round(); as r) {
+        @if (isTable() && game(); as g) {
+          <app-player-strip
+            [players]="g.players"
+            [target]="target()"
+            [viewerId]="r.playerId"
+            [connectedIds]="isOnline() ? (state()?.connectedPlayerIds ?? []) : null"
+            [waitingOn]="state()?.waitingOnPlayerIds ?? []"
+            [showRoundStatus]="isShared()"
+          />
         }
 
-        @if (activePlayer(); as player) {
+        @if (viewer(); as player) {
           <app-score-panel [player]="player" [roundNumber]="r.roundNumber" [maxLives]="game()?.settings?.maxLives ?? 0" />
+        }
+
+        @if (secondsLeft() !== null) {
+          <div class="clock" [class.urgent]="secondsLeft()! <= 10" role="timer" [attr.aria-label]="secondsLeft() + ' seconds left'">
+            <div class="clock-fill" [style.width.%]="clockPercent()"></div>
+            <span>{{ secondsLeft() }}s</span>
+          </div>
         }
 
         <section class="mystery-card" [class.playing]="audioPlaying()">
@@ -45,7 +80,7 @@
 
         <div class="answer-actions">
           <button type="button" class="btn btn-primary btn-lg submit-btn" [disabled]="!canSubmit || submitting()" (click)="submitAnswer()">
-            {{ submitting() ? 'Checking…' : r.anchorRound ? 'Start timeline' : 'Lock in answer' }}
+            {{ submitting() ? 'Locking in…' : r.anchorRound ? 'Start timeline' : 'Lock in answer' }}
           </button>
           <button type="button" class="btn btn-secondary btn-lg guess-toggle-btn" [class.active]="guessComplete" (click)="toggleGuessPanel()">
             @if (selectedGuessSong(); as sel) {
@@ -117,10 +152,65 @@
       }
     }
 
-    @case ('revealed') {
-      @if (lastResult(); as result) {
-        <app-score-panel [player]="result.player" [roundNumber]="round()?.roundNumber ?? 0" [maxLives]="game()?.settings?.maxLives ?? 0" />
-        <app-round-result [result]="result" [isGameOver]="isGameOver" (continue)="continueAfterReveal()" />
+    @case ('waiting') {
+      @if (game(); as g) {
+        <app-player-strip
+          [players]="g.players"
+          [target]="target()"
+          [viewerId]="state()?.viewerPlayerId ?? null"
+          [connectedIds]="isOnline() ? (state()?.connectedPlayerIds ?? []) : null"
+          [waitingOn]="state()?.waitingOnPlayerIds ?? []"
+          [showRoundStatus]="isShared()"
+        />
+
+        @if (secondsLeft() !== null) {
+          <div class="clock" [class.urgent]="secondsLeft()! <= 10" role="timer" [attr.aria-label]="secondsLeft() + ' seconds left'">
+            <div class="clock-fill" [style.width.%]="clockPercent()"></div>
+            <span>{{ secondsLeft() }}s</span>
+          </div>
+        }
+
+        <section class="interstitial waiting">
+          <app-vinyl [size]="110" mark="…" [spinning]="true" />
+          @if (viewer()?.answered) {
+            <h1>Locked in</h1>
+            <p class="lede">Waiting for {{ waitingNames() }}…</p>
+          } @else if (viewer()?.eliminated) {
+            <h1>You're out of lives</h1>
+            <p class="lede">Stay and watch how it ends.</p>
+          } @else {
+            <h1>{{ waitingNames() }} {{ waitingOn().length > 1 ? 'are' : 'is' }} placing a card…</h1>
+            <p class="lede">The reveal comes as soon as it's locked in.</p>
+          }
+        </section>
+
+        @if (watchedTimeline().length > 0) {
+          <section class="timeline-section">
+            <h3>{{ waitingNames() }}'s timeline</h3>
+            <app-timeline [entries]="watchedTimeline()" />
+          </section>
+        }
+      }
+    }
+
+    @case ('reveal') {
+      @if (summary(); as s) {
+        @if (isTable() && game(); as g) {
+          <app-player-strip
+            [players]="g.players"
+            [target]="target()"
+            [viewerId]="state()?.viewerPlayerId ?? null"
+            [connectedIds]="isOnline() ? (state()?.connectedPlayerIds ?? []) : null"
+          />
+        }
+        <app-round-result
+          [summary]="s"
+          [viewerId]="state()?.viewerPlayerId ?? null"
+          [isGameOver]="isGameOver()"
+          [countdown]="revealCountdown()"
+          [canContinue]="canSkipReveal() && !advancing()"
+          (continue)="continueAfterReveal()"
+        />
       }
     }
   }

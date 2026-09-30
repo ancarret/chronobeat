@@ -1,0 +1,38 @@
+<ul class="strip" aria-label="Players">
+  @for (seat of seats(); track seat.player.id) {
+    <li class="seat" [class.you]="seat.you" [class.out]="seat.status === 'out'" [class.offline]="seat.offline">
+      <span class="avatar" aria-hidden="true">{{ seat.player.displayName.charAt(0).toUpperCase() }}</span>
+      <div class="info">
+        <div class="name-row">
+          <span class="name">{{ seat.player.displayName }}</span>
+          @if (seat.you) {
+            <span class="tag">you</span>
+          }
+          @if (seat.offline) {
+            <span class="tag muted">offline</span>
+          }
+        </div>
+        @if (seat.progress !== null) {
+          <div class="race" role="progressbar" [attr.aria-valuenow]="seat.player.timelineSize" [attr.aria-valuemax]="target()">
+            <div class="race-fill" [style.width.%]="seat.progress * 100"></div>
+          </div>
+        }
+        <div class="meta">
+          <span>{{ seat.player.timelineSize }}{{ target() ? ' / ' + target() : '' }} {{ seat.player.timelineSize === 1 && !target() ? 'card' : 'cards' }}</span>
+          <span class="lives" [attr.aria-label]="seat.player.livesRemaining + ' lives'">♥ {{ seat.player.livesRemaining }}</span>
+        </div>
+      </div>
+      @switch (seat.status) {
+        @case ('locked') {
+          <span class="status locked" title="Locked in">✓</span>
+        }
+        @case ('thinking') {
+          <span class="status thinking" title="Still thinking"><i></i><i></i><i></i></span>
+        }
+        @case ('out') {
+          <span class="status out">out</span>
+        }
+      }
+    </li>
+  }
+</ul>

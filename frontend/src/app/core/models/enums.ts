@@ -1,4 +1,6 @@
-export type GameMode = 'SOLO' | 'LOCAL_MULTIPLAYER';
+export type GameMode = 'SOLO' | 'LOCAL_MULTIPLAYER' | 'ONLINE_MULTIPLAYER';
+/** TURN_BASED: each turn is one player's own song. SHARED_SONGS: everyone hears the same song each round. */
+export type PlayStyle = 'TURN_BASED' | 'SHARED_SONGS';
 export type GameStatus = 'CREATED' | 'ACTIVE' | 'FINISHED';
 export type Difficulty = 'EASY' | 'NORMAL' | 'HARD';
 export type MusicGenre =

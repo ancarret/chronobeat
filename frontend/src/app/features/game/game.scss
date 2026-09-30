@@ -5,12 +5,78 @@
   gap: 20px;
 }
 
-.turn-indicator {
+// Hand-over and waiting screens: one big message with a record, centred on the page.
+.interstitial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 20px;
   text-align: center;
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--brand-primary);
-  font-size: 0.9rem;
+
+  h1 {
+    font-size: 1.9rem;
+  }
+
+  .lede {
+    max-width: 44ch;
+    color: var(--text-muted);
+  }
+
+  .btn {
+    margin-top: 10px;
+  }
+
+  &.waiting {
+    padding: 28px 20px 12px;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// Round clock: drains left to right and turns red for the last ten seconds.
+.clock {
+  position: relative;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+
+  span {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &.urgent {
+    border-color: var(--danger);
+  }
+}
+
+.clock-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.55), rgba(255, 107, 74, 0.55));
+  transition: width 1s linear;
+
+  .urgent & {
+    background: rgba(251, 113, 133, 0.5);
+    animation: urgent-pulse 1s ease-in-out infinite;
+  }
+}
+
+@keyframes urgent-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .mystery-card {

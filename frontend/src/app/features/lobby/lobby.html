@@ -1,0 +1,73 @@
+<div class="page page-wide lobby-page">
+  @if (error(); as err) {
+    <app-error-state title="Can't open this room" [message]="err.message" retryLabel="" />
+    <div class="back"><a class="btn btn-primary" routerLink="/">Back home</a></div>
+  } @else if (game(); as g) {
+    <header class="lobby-head">
+      <p class="eyebrow">Online room</p>
+      <h1>Waiting for players</h1>
+    </header>
+
+    <section class="code-card" aria-label="Room code">
+      <app-vinyl [size]="96" mark="♪" [spinning]="true" />
+      <div class="code-block">
+        <span class="code-label">Room code</span>
+        <span class="code" aria-live="polite">{{ g.roomCode }}</span>
+        <div class="code-actions">
+          <button type="button" class="btn btn-secondary" (click)="copy('code')">{{ copied() === 'code' ? 'Copied' : 'Copy code' }}</button>
+          <button type="button" class="btn btn-secondary" (click)="copy('link')">{{ copied() === 'link' ? 'Copied' : 'Copy link' }}</button>
+          @if (canShare) {
+            <button type="button" class="btn btn-secondary" (click)="share()">Share…</button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <ul class="rules" aria-label="House rules">
+      @for (rule of rules(); track rule) {
+        <li>{{ rule }}</li>
+      }
+    </ul>
+
+    <section class="players-card">
+      <h2>Players <span class="count">{{ players().length }} / 8</span></h2>
+      <ul class="players">
+        @for (p of players(); track p.id) {
+          <li [class.me]="p.id === me()?.id">
+            <span class="avatar" aria-hidden="true">{{ p.displayName.charAt(0).toUpperCase() }}</span>
+            <span class="name">{{ p.displayName }}</span>
+            @if (p.host) {
+              <span class="tag host">host</span>
+            }
+            @if (p.id === me()?.id) {
+              <span class="tag">you</span>
+            }
+            <span class="presence" [class.on]="connected().has(p.id)" [attr.title]="connected().has(p.id) ? 'Connected' : 'Not connected'">
+              {{ connected().has(p.id) ? 'here' : 'away' }}
+            </span>
+            @if (isHost() && !p.host) {
+              <button type="button" class="btn-link" (click)="kick(p)" [attr.aria-label]="'Remove ' + p.displayName">Remove</button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+
+    @if (actionError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+
+    <div class="lobby-actions">
+      @if (isHost()) {
+        <button type="button" class="btn btn-primary btn-lg" [disabled]="!canStart()" (click)="start()">
+          {{ busy() ? 'Starting…' : players().length < 2 ? 'Waiting for a second player…' : 'Start game' }}
+        </button>
+      } @else {
+        <p class="waiting-note">Waiting for the host to start the game…</p>
+      }
+      <button type="button" class="btn btn-ghost" (click)="leave()">Leave room</button>
+    </div>
+  } @else {
+    <app-loading-state message="Opening the room…" />
+  }
+</div>

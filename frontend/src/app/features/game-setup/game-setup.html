@@ -1,109 +1,159 @@
 <div class="page page-wide setup">
-  <h1>Set up your game</h1>
-  <p class="lead">Pick the songs you want to be tested on. Everything is optional.</p>
+  <div class="setup-head">
+    <div>
+      <h1>Set up your game</h1>
+      <p class="lead">Pick how you play and which songs you want to be tested on.</p>
+    </div>
+    <a class="btn btn-secondary join-link" routerLink="/join">Have a room code? Join</a>
+  </div>
 
   <div class="setup-grid">
-  <section class="field-group">
-    <h2>Mode</h2>
-    <div class="segmented">
-      <button type="button" [class.active]="mode() === 'SOLO'" (click)="setMode('SOLO')">Solo</button>
-      <button type="button" [class.active]="mode() === 'LOCAL_MULTIPLAYER'" (click)="setMode('LOCAL_MULTIPLAYER')">
-        Local multiplayer
-      </button>
-    </div>
-  </section>
+    <section class="field-group span-2">
+      <h2>Mode</h2>
+      <div class="segmented" role="group" aria-label="Mode">
+        <button type="button" [class.active]="mode() === 'SOLO'" (click)="setMode('SOLO')">Solo</button>
+        <button type="button" [class.active]="mode() === 'LOCAL_MULTIPLAYER'" (click)="setMode('LOCAL_MULTIPLAYER')">
+          Same device
+        </button>
+        <button type="button" [class.active]="mode() === 'ONLINE_MULTIPLAYER'" (click)="setMode('ONLINE_MULTIPLAYER')">
+          Online
+        </button>
+      </div>
+      @if (isOnline()) {
+        <p class="hint">Each player joins from their own phone with a short room code.</p>
+      }
+    </section>
 
-  <section class="field-group">
-    <h2>{{ mode() === 'SOLO' ? 'Your name' : 'Players' }}</h2>
+    @if (!isSolo()) {
+      <section class="field-group span-2">
+        <h2>How do you play?</h2>
+        <div class="style-cards" role="group" aria-label="Play style">
+          <button type="button" class="style-card" [class.active]="playStyle() === 'TURN_BASED'" (click)="setPlayStyle('TURN_BASED')">
+            <strong>Take turns</strong>
+            <span>Each turn is one player's own song, placed on their own timeline. The classic party rhythm.</span>
+          </button>
+          <button type="button" class="style-card" [class.active]="playStyle() === 'SHARED_SONGS'" (click)="setPlayStyle('SHARED_SONGS')">
+            <strong>Same songs</strong>
+            <span>Everyone hears the same song each round and places it on their own timeline. A fair race on identical cards.</span>
+          </button>
+        </div>
+      </section>
+    }
 
-    @if (mode() === 'SOLO') {
-      <input
-        class="text-input"
-        type="text"
-        placeholder="You"
-        maxlength="60"
-        [ngModel]="playerNames()[0]"
-        (ngModelChange)="updatePlayerName(0, $event)"
-      />
-    } @else {
-      <div class="player-list">
-        @for (name of playerNames(); track $index) {
-          <div class="player-row">
-            <input
-              class="text-input"
-              type="text"
-              [placeholder]="'Player ' + ($index + 1)"
-              maxlength="60"
-              [ngModel]="name"
-              (ngModelChange)="updatePlayerName($index, $event)"
-            />
-            @if (playerNames().length > 2) {
-              <button type="button" class="btn-ghost icon-btn" (click)="removePlayer($index)" aria-label="Remove player">✕</button>
-            }
-          </div>
+    <section class="field-group">
+      <h2>{{ isSolo() ? 'Your name' : isOnline() ? 'Your name (you host)' : 'Players' }}</h2>
+
+      @if (isSolo() || isOnline()) {
+        <input
+          class="text-input"
+          type="text"
+          [placeholder]="isSolo() ? 'You' : 'Your name'"
+          maxlength="60"
+          [ngModel]="playerNames()[0]"
+          (ngModelChange)="updatePlayerName(0, $event)"
+        />
+      } @else {
+        <div class="player-list">
+          @for (name of playerNames(); track $index) {
+            <div class="player-row">
+              <input
+                class="text-input"
+                type="text"
+                [placeholder]="'Player ' + ($index + 1)"
+                maxlength="60"
+                [ngModel]="name"
+                (ngModelChange)="updatePlayerName($index, $event)"
+              />
+              @if (playerNames().length > 2) {
+                <button type="button" class="btn-ghost icon-btn" (click)="removePlayer($index)" aria-label="Remove player">✕</button>
+              }
+            </div>
+          }
+        </div>
+        @if (playerNames().length < 8) {
+          <button type="button" class="btn btn-secondary add-player" (click)="addPlayer()">+ Add player</button>
+        }
+        <p class="hint">Player 1 is you: this game counts towards your records.</p>
+      }
+    </section>
+
+    <section class="field-group">
+      <h2>Goal <span class="optional">{{ isSolo() ? 'reach N cards' : 'first to N cards wins' }}</span></h2>
+      <div class="chip-select">
+        @for (g of goals; track g) {
+          <button type="button" [class.active]="goal() === g" (click)="setGoal(g)">{{ g === null ? 'No goal' : g + ' cards' }}</button>
         }
       </div>
-      @if (playerNames().length < 8) {
-        <button type="button" class="btn btn-secondary add-player" (click)="addPlayer()">+ Add player</button>
-      }
-      <p class="hint">Player 1 is you: this game counts towards your records.</p>
+    </section>
+
+    @if (!isSolo()) {
+      <section class="field-group">
+        <h2>Time per round</h2>
+        <div class="chip-select">
+          @for (t of timeLimits(); track t) {
+            <button type="button" [class.active]="answerSeconds() === t" (click)="setTimeLimit(t)">{{ t === null ? 'No limit' : t + 's' }}</button>
+          }
+        </div>
+        @if (isOnline()) {
+          <p class="hint">Online games run on a clock so nobody can stall the table.</p>
+        }
+      </section>
     }
-  </section>
 
-  <section class="field-group span-2">
-    <h2>Region</h2>
-    <div class="chip-select">
-      @for (m of markets; track m.code) {
-        <button type="button" [class.active]="market() === m.code" (click)="market.set(m.code)">{{ m.label }}</button>
-      }
-    </div>
-  </section>
+    <section class="field-group">
+      <h2>Difficulty</h2>
+      <div class="segmented">
+        <button type="button" [class.active]="difficulty() === 'EASY'" (click)="difficulty.set('EASY')">Easy</button>
+        <button type="button" [class.active]="difficulty() === 'NORMAL'" (click)="difficulty.set('NORMAL')">Normal</button>
+        <button type="button" [class.active]="difficulty() === 'HARD'" (click)="difficulty.set('HARD')">Hard</button>
+      </div>
+    </section>
 
-  <section class="field-group span-2">
-    <h2>Genre</h2>
-    <div class="chip-select">
-      <button type="button" [class.active]="genre() === null" (click)="genre.set(null)">All genres</button>
-      @for (g of genres; track g[0]) {
-        <button type="button" [class.active]="genre() === g[0]" (click)="genre.set(g[0])">{{ g[1] }}</button>
-      }
-    </div>
-  </section>
+    <section class="field-group span-2">
+      <h2>Region</h2>
+      <div class="chip-select">
+        @for (m of markets; track m.code) {
+          <button type="button" [class.active]="market() === m.code" (click)="market.set(m.code)">{{ m.label }}</button>
+        }
+      </div>
+    </section>
 
-  <section class="field-group span-2">
-    <h2>Years</h2>
-    <div class="chip-select">
-      @for (decade of decades; track decade.label; let i = $index) {
-        <button type="button" [class.active]="decadeIndex() === i" (click)="decadeIndex.set(i)">{{ decade.label }}</button>
-      }
-    </div>
-  </section>
+    <section class="field-group span-2">
+      <h2>Genre</h2>
+      <div class="chip-select">
+        <button type="button" [class.active]="genre() === null" (click)="genre.set(null)">All genres</button>
+        @for (g of genres; track g[0]) {
+          <button type="button" [class.active]="genre() === g[0]" (click)="genre.set(g[0])">{{ g[1] }}</button>
+        }
+      </div>
+    </section>
 
-  <section class="field-group">
-    <h2>Difficulty</h2>
-    <div class="segmented">
-      <button type="button" [class.active]="difficulty() === 'EASY'" (click)="difficulty.set('EASY')">Easy</button>
-      <button type="button" [class.active]="difficulty() === 'NORMAL'" (click)="difficulty.set('NORMAL')">Normal</button>
-      <button type="button" [class.active]="difficulty() === 'HARD'" (click)="difficulty.set('HARD')">Hard</button>
-    </div>
-  </section>
+    <section class="field-group span-2">
+      <h2>Years</h2>
+      <div class="chip-select">
+        @for (decade of decades; track decade.label; let i = $index) {
+          <button type="button" [class.active]="decadeIndex() === i" (click)="decadeIndex.set(i)">{{ decade.label }}</button>
+        }
+      </div>
+    </section>
 
-  <section class="field-group two-col">
-    <div>
-      <h2>Lives</h2>
-      <input class="text-input" type="number" min="1" max="10" [ngModel]="maxLives()" (ngModelChange)="maxLives.set($event)" />
-    </div>
-    <div>
-      <h2>Round limit <span class="optional">optional</span></h2>
-      <input
-        class="text-input"
-        type="number"
-        min="1"
-        placeholder="Unlimited"
-        [ngModel]="maxRounds()"
-        (ngModelChange)="maxRounds.set($event || null)"
-      />
-    </div>
-  </section>
+    <section class="field-group two-col span-2">
+      <div>
+        <h2>Lives</h2>
+        <input class="text-input" type="number" min="1" max="10" [ngModel]="maxLives()" (ngModelChange)="maxLives.set($event)" />
+      </div>
+      <div>
+        <h2>Round limit <span class="optional">optional</span></h2>
+        <input
+          class="text-input"
+          type="number"
+          min="1"
+          placeholder="Unlimited"
+          [ngModel]="maxRounds()"
+          (ngModelChange)="maxRounds.set($event || null)"
+        />
+      </div>
+    </section>
   </div>
 
   @if (error(); as err) {
@@ -112,7 +162,11 @@
 
   <div class="start-bar">
     <button type="button" class="btn btn-primary btn-lg start-btn" [disabled]="!canSubmit || submitting()" (click)="startGame()">
-      {{ submitting() ? 'Starting…' : 'Start game' }}
+      @if (submitting()) {
+        {{ isOnline() ? 'Opening the room…' : 'Starting…' }}
+      } @else {
+        {{ isOnline() ? 'Create room' : 'Start game' }}
+      }
     </button>
   </div>
 </div>

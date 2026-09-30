@@ -63,6 +63,13 @@ export class Results {
     return [...results.players].sort((a, b) => b.score - a.score);
   }
 
+  /** "Your run" for a solo game, otherwise who won (or that nobody did: a dead heat on every tie-break). */
+  protected headline(results: GameResults): string {
+    if (results.players.length === 1) return 'Your run';
+    const winner = results.players.find((p) => p.id === results.winningPlayerId);
+    return winner ? `${winner.displayName} wins!` : "It's a tie!";
+  }
+
   protected recordsFor(player: Player): RecordsBroken | null {
     return this.results()?.records.find((r) => r.playerId === player.id) ?? null;
   }

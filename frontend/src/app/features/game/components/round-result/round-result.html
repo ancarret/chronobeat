@@ -2,57 +2,106 @@
   <app-confetti />
 }
 
-<div class="reveal" [class.correct]="result().correct" [class.incorrect]="!result().correct">
-  <div class="reveal-card">
+<div class="reveal">
+  <div
+    class="reveal-card"
+    [class.correct]="headline()?.verdict === 'correct'"
+    [class.incorrect]="headline()?.verdict === 'missed'"
+  >
     <div class="badge">
-      {{ result().anchorRound ? 'First song' : result().correct ? 'Correct!' : 'Not quite' }}
+      @if (headline(); as h) {
+        {{ h.label }}{{ h.verdict === 'correct' ? '!' : '' }}
+      } @else {
+        Round {{ summary().roundNumber }}
+      }
     </div>
 
     <div class="song">
-      @if (result().reveal.artworkUrl) {
-        <img [src]="result().reveal.artworkUrl" [alt]="result().reveal.title" class="artwork" />
+      @if (summary().reveal.artworkUrl) {
+        <img [src]="summary().reveal.artworkUrl" [alt]="summary().reveal.title" class="artwork" />
       } @else {
         <div class="artwork artwork-placeholder" aria-hidden="true">♪</div>
       }
       <div class="song-meta">
-        <span class="year">{{ result().reveal.year }}</span>
-        <h3>{{ result().reveal.title }}</h3>
-        <p class="artist">{{ result().reveal.artist }}</p>
+        <span class="year">{{ summary().reveal.year }}</span>
+        <h3>{{ summary().reveal.title }}</h3>
+        <p class="artist">{{ summary().reveal.artist }}</p>
 
-        @if (!result().anchorRound) {
-          <p class="feedback">
-            @if (result().correct) {
-              It's in your timeline now.
-            } @else {
-              That one didn't make it into your timeline.
-            }
-          </p>
-        }
-
-        @if (result().guessCorrect !== null) {
-          <p class="guess-feedback" [class.correct]="result().guessCorrect" [class.incorrect]="!result().guessCorrect">
-            @if (result().guessCorrect) {
-              ★ Nailed the song — bonus life!
-            } @else {
-              Guess wasn't quite right.
-            }
-          </p>
+        @if (headline(); as h) {
+          @if (h.verdict !== 'first') {
+            <p class="feedback">
+              @if (h.verdict === 'correct') {
+                It's in your timeline now.
+              } @else if (h.result.submittedPosition === null) {
+                Time ran out before you placed it.
+              } @else {
+                That one didn't make it into your timeline.
+              }
+            </p>
+          }
+          @if (h.result.guessCorrect !== null) {
+            <p class="guess-feedback" [class.correct]="h.result.guessCorrect" [class.incorrect]="!h.result.guessCorrect">
+              @if (h.result.guessCorrect) {
+                ★ Nailed the song — bonus life!
+              } @else {
+                Guess wasn't quite right.
+              }
+            </p>
+          }
         }
       </div>
     </div>
   </div>
 
-  <section class="recap">
-    <h3>{{ result().timeline.length === 1 ? 'Your timeline starts here' : 'Your timeline' }}</h3>
-    <app-timeline
-      [entries]="result().timeline"
-      [freshPosition]="freshPosition()"
-      [missPosition]="missPosition()"
-      [hintPositions]="hintPositions()"
-    />
+  <section class="players" aria-label="Round results">
+    @for (row of rows(); track row.result.player.id) {
+      <article class="player-result" [class.you]="row.you">
+        <header>
+          <div class="who">
+            <span class="avatar" aria-hidden="true">{{ row.result.player.displayName.charAt(0).toUpperCase() }}</span>
+            <strong>{{ row.result.player.displayName }}</strong>
+            @if (row.you && showAllNames()) {
+              <span class="tag">you</span>
+            }
+          </div>
+          <div class="chips">
+            <span class="chip" [class.ok]="row.verdict === 'correct' || row.verdict === 'first'" [class.bad]="row.verdict === 'missed'">
+              {{ row.label }}
+            </span>
+            @if (row.result.guessCorrect) {
+              <span class="chip ok">★ +1 life</span>
+            }
+            <span class="chip plain">{{ row.result.player.score }} pts</span>
+            <span class="chip plain lives">♥ {{ row.result.player.livesRemaining }}</span>
+          </div>
+        </header>
+
+        @if (showAllNames() || !headline()) {
+          <app-timeline
+            [entries]="row.result.timeline"
+            [freshPosition]="row.fresh"
+            [missPosition]="row.miss"
+            [hintPositions]="row.hints"
+          />
+        } @else {
+          <h4>{{ row.result.timeline.length === 1 ? 'Your timeline starts here' : 'Your timeline' }}</h4>
+          <app-timeline
+            [entries]="row.result.timeline"
+            [freshPosition]="row.fresh"
+            [missPosition]="row.miss"
+            [hintPositions]="row.hints"
+          />
+        }
+      </article>
+    }
   </section>
 
-  <button type="button" class="btn btn-primary btn-lg continue-btn" (click)="continue.emit()">
-    {{ isGameOver() ? 'See results' : 'Next round' }}
-  </button>
+  <div class="actions">
+    <button type="button" class="btn btn-primary btn-lg continue-btn" [disabled]="!canContinue()" (click)="continue.emit()">
+      {{ isGameOver() ? 'See results' : 'Next round' }}
+    </button>
+    @if (countdown() !== null && !isGameOver()) {
+      <p class="countdown">Next round in {{ countdown() }}s</p>
+    }
+  </div>
 </div>

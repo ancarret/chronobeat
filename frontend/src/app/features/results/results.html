@@ -6,7 +6,7 @@
       <app-confetti />
     }
     <p class="eyebrow">Game over</p>
-    <h1>{{ r.players.length > 1 ? 'Final standings' : 'Your run' }}</h1>
+    <h1>{{ headline(r) }}</h1>
 
     <div class="player-cards">
       @for (player of sortedPlayers(r); track player.id) {

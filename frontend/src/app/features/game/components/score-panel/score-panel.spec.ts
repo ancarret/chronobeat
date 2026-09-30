@@ -15,6 +15,8 @@ const player = (overrides: Partial<Player> = {}): Player => ({
   livesRemaining: 3,
   eliminated: false,
   timelineSize: 0,
+  host: false,
+  answered: false,
   ...overrides,
 });
 

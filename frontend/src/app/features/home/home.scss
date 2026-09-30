@@ -45,7 +45,15 @@ h1 {
 }
 
 .cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 32px;
+  justify-content: center;
+
+  @media (min-width: 900px) {
+    justify-content: flex-start;
+  }
 }
 
 .hero-art {
@@ -182,9 +190,17 @@ h1 {
   gap: 20px;
   text-align: left;
 
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(3, 1fr);
+
+    &.two {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
+}
+
+.modes h2.second {
+  margin-top: 48px;
 }
 
 .mode-card {

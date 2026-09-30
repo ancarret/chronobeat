@@ -11,6 +11,7 @@
     </p>
     <div class="cta-row">
       <a class="btn btn-primary btn-lg" routerLink="/play">Play {{ config.productName }}</a>
+      <a class="btn btn-secondary btn-lg" routerLink="/join">Join with a code</a>
     </div>
 
     @if (stats(); as s) {
@@ -68,15 +69,31 @@
 </section>
 
 <section class="modes page page-wide">
-  <h2>Two ways to play</h2>
+  <h2>Play your way</h2>
   <div class="mode-cards">
     <div class="card mode-card">
       <h3>Solo</h3>
-      <p>Build the longest timeline you can before you run out of lives.</p>
+      <p>Build the longest timeline you can before you run out of lives, or race to a goal.</p>
     </div>
     <div class="card mode-card">
-      <h3>Local multiplayer</h3>
-      <p>Pass the device around. Everyone builds their own timeline, same device, same songs.</p>
+      <h3>Same device</h3>
+      <p>Pass one phone around the table. Everyone builds their own timeline.</p>
+    </div>
+    <div class="card mode-card">
+      <h3>Online</h3>
+      <p>Everyone joins from their own phone with a short room code and plays live.</p>
+    </div>
+  </div>
+
+  <h2 class="second">Two ways to deal</h2>
+  <div class="mode-cards two">
+    <div class="card mode-card">
+      <h3>Take turns</h3>
+      <p>Each turn is one player's own song, placed on their own timeline. The classic party rhythm.</p>
+    </div>
+    <div class="card mode-card">
+      <h3>Same songs</h3>
+      <p>Everyone hears the same song each round and places it at the same time. A fair race: first to 10 wins.</p>
     </div>
   </div>
 </section>

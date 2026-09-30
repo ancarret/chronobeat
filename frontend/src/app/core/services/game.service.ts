@@ -1,14 +1,15 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ConfigService } from './config.service';
 import {
+  AnswerOutcome,
   AnswerRequest,
   CreateGameRequest,
   Game,
   GameResults,
+  GameState,
   RoundPending,
-  RoundResult,
   SongSearchResult,
   StartGameResponse,
   TimelineEntry,
@@ -18,6 +19,8 @@ import {
  * Thin wrapper around the backend REST API. Deliberately has no game-rule logic
  * of its own - every decision (song selection, placement validation, scoring)
  * happens server-side; this service only shapes HTTP calls.
+ *
+ * Online games additionally need the caller's seat token; the player interceptor attaches it.
  */
 @Injectable({ providedIn: 'root' })
 export class GameService {
@@ -37,21 +40,39 @@ export class GameService {
     return this.http.post<StartGameResponse>(`${this.base}/${gameId}/start`, {});
   }
 
-  getCurrentRound(gameId: string): Observable<RoundPending> {
-    return this.http.get<RoundPending>(`${this.base}/${gameId}/rounds/current`);
+  /**
+   * One player's complete view of the game. On a shared device leave `playerId` out and the server
+   * hands over whoever still has something to do.
+   */
+  getState(gameId: string, playerId?: string | null): Observable<GameState> {
+    const params = playerId ? new HttpParams().set('playerId', playerId) : undefined;
+    return this.http.get<GameState>(`${this.base}/${gameId}/state`, { params });
   }
 
-  submitAnswer(gameId: string, roundId: string, answer: AnswerRequest): Observable<RoundResult> {
-    return this.http.post<RoundResult>(`${this.base}/${gameId}/rounds/${roundId}/answer`, answer);
+  getCurrentRound(gameId: string, playerId?: string | null): Observable<RoundPending> {
+    const params = playerId ? new HttpParams().set('playerId', playerId) : undefined;
+    return this.http.get<RoundPending>(`${this.base}/${gameId}/rounds/current`, { params });
   }
 
-  nextRound(gameId: string): Observable<RoundPending> {
-    return this.http.post<RoundPending>(`${this.base}/${gameId}/next-round`, {});
+  submitAnswer(gameId: string, roundId: string, answer: AnswerRequest): Observable<AnswerOutcome> {
+    return this.http.post<AnswerOutcome>(`${this.base}/${gameId}/rounds/${roundId}/answer`, answer);
+  }
+
+  /**
+   * Deals the next round. `after` is the round number you just watched: if somebody else already
+   * moved the game on, the server leaves it alone, so everyone can safely press "Next" at once.
+   */
+  nextRound(gameId: string, after: number, playerId?: string | null): Observable<GameState> {
+    let params = new HttpParams().set('after', after);
+    if (playerId) {
+      params = params.set('playerId', playerId);
+    }
+    return this.http.post<GameState>(`${this.base}/${gameId}/next-round`, {}, { params });
   }
 
   getTimeline(gameId: string, playerId?: string): Observable<TimelineEntry[]> {
-    const url = playerId ? `${this.base}/${gameId}/timeline?playerId=${playerId}` : `${this.base}/${gameId}/timeline`;
-    return this.http.get<TimelineEntry[]>(url);
+    const params = playerId ? new HttpParams().set('playerId', playerId) : undefined;
+    return this.http.get<TimelineEntry[]>(`${this.base}/${gameId}/timeline`, { params });
   }
 
   getResults(gameId: string): Observable<GameResults> {

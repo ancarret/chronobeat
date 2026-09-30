@@ -11,6 +11,66 @@ h1 {
   color: var(--text-muted);
 }
 
+.setup-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.join-link {
+  padding: 10px 18px;
+  font-size: 0.85rem;
+}
+
+// "Take turns" / "Same songs": the choice that changes the shape of the game, so it gets real cards.
+.style-cards {
+  display: grid;
+  gap: 12px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.style-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  text-align: left;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  strong {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  &:hover:not(.active) {
+    border-color: var(--text-faint);
+  }
+
+  &.active {
+    border-color: var(--brand-primary);
+    background: rgba(255, 107, 74, 0.1);
+
+    strong {
+      color: var(--brand-primary);
+    }
+  }
+}
+
 // One column on phones; two on wider screens, with the long chip lists spanning both.
 .setup-grid {
   display: grid;

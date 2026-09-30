@@ -1,0 +1,68 @@
+<div class="page join-page">
+  <header>
+    <p class="eyebrow">Online</p>
+    <h1>Join a game</h1>
+    <p class="lead">Ask the host for the room code, or open the link they shared.</p>
+  </header>
+
+  <form class="card join-card" (ngSubmit)="join()">
+    <label for="room-code">Room code</label>
+    <input
+      id="room-code"
+      class="code-input"
+      name="code"
+      type="text"
+      inputmode="text"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+      maxlength="8"
+      placeholder="ABCD"
+      [ngModel]="code()"
+      (ngModelChange)="onCodeChange($event)"
+    />
+
+    @if (lookingUp()) {
+      <p class="status">Looking for that room…</p>
+    } @else if (lookupError(); as message) {
+      <p class="status error" role="alert">{{ message }}</p>
+    }
+
+    @if (room(); as r) {
+      <div class="room-preview">
+        <p class="host"><strong>{{ r.hostName }}</strong>'s room · {{ r.playerCount }} / {{ r.maxPlayers }} players</p>
+        <ul class="rules">
+          @for (rule of rules(); track rule) {
+            <li>{{ rule }}</li>
+          }
+        </ul>
+      </div>
+
+      <label for="nickname">Your name</label>
+      <input
+        id="nickname"
+        class="text-input"
+        name="nickname"
+        type="text"
+        maxlength="60"
+        autocomplete="nickname"
+        placeholder="What should we call you?"
+        [ngModel]="nickname()"
+        (ngModelChange)="nickname.set($event)"
+      />
+
+      @if (r.playerCount >= r.maxPlayers) {
+        <p class="status error" role="alert">This room is full.</p>
+      }
+      @if (joinError(); as message) {
+        <p class="status error" role="alert">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn btn-primary btn-lg" [disabled]="!canJoin()">
+        {{ joining() ? 'Joining…' : 'Join the game' }}
+      </button>
+    }
+  </form>
+
+  <p class="alt">Want to host instead? <a routerLink="/play">Set up a game</a></p>
+</div>
