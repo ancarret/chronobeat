@@ -5,8 +5,14 @@
 
   @for (i of slotIndices(); track i) {
     @if (interactive()) {
-      <button type="button" class="slot" [class.selected]="selectedPosition() === i" (click)="select(i)">
-        <span>{{ selectedPosition() === i ? 'Placing here' : 'Place here' }}</span>
+      <button
+        type="button"
+        class="slot"
+        [class.selected]="selectedPosition() === i"
+        (click)="select(i)"
+        [attr.aria-label]="selectedPosition() === i ? 'Placing here' : 'Place here'"
+      >
+        <span aria-hidden="true">{{ selectedPosition() === i ? '✓' : '+' }}</span>
       </button>
     }
 
