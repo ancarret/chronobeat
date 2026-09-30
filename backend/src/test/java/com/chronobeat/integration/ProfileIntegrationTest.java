@@ -139,7 +139,7 @@ class ProfileIntegrationTest {
         }
         RoundPendingResponse last = gameService.nextRound(gameId);
         var result = gameService.submitAnswer(gameId, last.roundId(), new AnswerRequest(placementIndex(gameId, last, false)));
-        assertThat(result.gameStatus()).isEqualTo(GameStatus.FINISHED);
+        assertThat(result.result().gameStatus()).isEqualTo(GameStatus.FINISHED);
         return gameId;
     }
 

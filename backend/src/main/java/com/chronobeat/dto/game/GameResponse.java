@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/** @param roomCode the code others type to join, for online games only */
 public record GameResponse(
         UUID id,
         GameMode mode,
@@ -13,4 +14,5 @@ public record GameResponse(
         GameSettingsResponse settings,
         int currentRoundNumber,
         List<PlayerResponse> players,
-        Instant createdAt) {}
+        Instant createdAt,
+        String roomCode) {}

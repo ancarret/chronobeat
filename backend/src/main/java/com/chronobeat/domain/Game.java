@@ -14,8 +14,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -38,6 +40,10 @@ public class Game {
 
     @Embedded
     private GameSettings settings;
+
+    /** Short join code for online rooms; null for solo and shared-device games. */
+    @Column(name = "room_code", length = 8)
+    private String roomCode;
 
     @Column(name = "current_round_number", nullable = false)
     private int currentRoundNumber;
@@ -73,6 +79,22 @@ public class Game {
         player.assignToGame(this);
     }
 
+    public void removePlayer(GamePlayer player) {
+        players.remove(player);
+    }
+
+    public void assignRoomCode(String roomCode) {
+        this.roomCode = roomCode;
+    }
+
+    public boolean isOnline() {
+        return mode == GameMode.ONLINE_MULTIPLAYER;
+    }
+
+    public boolean isSharedSongs() {
+        return settings.getPlayStyle() == PlayStyle.SHARED_SONGS;
+    }
+
     public void start() {
         if (status != GameStatus.CREATED) {
             throw new IllegalStateException("Game already started");
@@ -88,11 +110,41 @@ public class Game {
         this.currentRoundNumber++;
     }
 
-    /** Game ends once every player has run out of lives, or the configured round cap is reached. */
+    /**
+     * Game ends once every player has run out of lives, the configured round cap is reached, or (in a
+     * race) somebody has built the target timeline. Shared-song games only ask this once a whole
+     * round is resolved, so players finishing the same round are compared fairly rather than by who
+     * clicked first.
+     */
     public boolean shouldFinish() {
         boolean allEliminated = players.stream().allMatch(GamePlayer::isEliminated);
         boolean roundCapReached = settings.getMaxRounds() != null && currentRoundNumber >= settings.getMaxRounds();
-        return allEliminated || roundCapReached;
+        return allEliminated || roundCapReached || targetReached();
+    }
+
+    public boolean targetReached() {
+        Integer target = settings.getTargetTimelineSize();
+        return target != null && players.stream().anyMatch(p -> p.getTimeline().size() >= target);
+    }
+
+    /**
+     * The winner, or empty on a genuine tie. In a race the longest timeline wins (then score, then fewest
+     * misses); otherwise score decides first. A single-player game is always won by that player.
+     */
+    public Optional<GamePlayer> determineWinner() {
+        Comparator<GamePlayer> byTimeline = Comparator.comparingInt((GamePlayer p) -> p.getTimeline().size()).reversed();
+        Comparator<GamePlayer> byScore = Comparator.comparingInt(GamePlayer::getScore).reversed();
+        Comparator<GamePlayer> byFewestMisses = Comparator.comparingInt(GamePlayer::getIncorrectAnswers);
+        Comparator<GamePlayer> ranking = settings.getTargetTimelineSize() != null
+                ? byTimeline.thenComparing(byScore).thenComparing(byFewestMisses)
+                : byScore.thenComparing(byTimeline).thenComparing(byFewestMisses);
+
+        List<GamePlayer> ranked = players.stream().sorted(ranking).toList();
+        if (ranked.isEmpty()) {
+            return Optional.empty();
+        }
+        boolean tiedAtTheTop = ranked.size() > 1 && ranking.compare(ranked.get(0), ranked.get(1)) == 0;
+        return tiedAtTheTop ? Optional.empty() : Optional.of(ranked.get(0));
     }
 
     public UUID getId() {
@@ -109,6 +161,10 @@ public class Game {
 
     public GameSettings getSettings() {
         return settings;
+    }
+
+    public String getRoomCode() {
+        return roomCode;
     }
 
     public int getCurrentRoundNumber() {

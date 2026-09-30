@@ -10,6 +10,7 @@ import com.chronobeat.domain.GameStatus;
 import com.chronobeat.domain.MusicGenre;
 import com.chronobeat.domain.MusicProviderType;
 import com.chronobeat.domain.Song;
+import com.chronobeat.dto.game.AnswerOutcomeResponse;
 import com.chronobeat.dto.game.AnswerRequest;
 import com.chronobeat.dto.game.CreateGameRequest;
 import com.chronobeat.dto.game.GameResponse;
@@ -79,6 +80,13 @@ class GameServiceIntegrationTest {
                 song("Dua Lipa", "Levitating", 2020)));
     }
 
+    /** Answers a round and returns the result, asserting that it resolved (always true in a solo game). */
+    private RoundResultResponse resolve(UUID gameId, UUID roundId, AnswerRequest request) {
+        AnswerOutcomeResponse outcome = gameService.submitAnswer(gameId, roundId, request);
+        assertThat(outcome.resolved()).isTrue();
+        return outcome.result();
+    }
+
     private Song song(String artist, String title, int year) {
         return new Song(
                 MusicProviderType.APPLE_MUSIC, UUID.randomUUID().toString(), title, artist, "Album",
@@ -122,7 +130,7 @@ class GameServiceIntegrationTest {
         assertThat(started.currentRound().roundNumber()).isEqualTo(1);
 
         // Anchor round: no placement decision, song is auto-added to the timeline.
-        RoundResultResponse anchorResult = gameService.submitAnswer(
+        RoundResultResponse anchorResult = resolve(
                 created.id(), started.currentRound().roundId(), new AnswerRequest(null));
         assertThat(anchorResult.correct()).isTrue();
         assertThat(anchorResult.timeline()).hasSize(1);
@@ -138,7 +146,7 @@ class GameServiceIntegrationTest {
 
         UUID playerId = created.players().get(0).id();
         int wrongIndex = findGuaranteedWrongIndex(created.id(), round2.roundId(), playerId);
-        RoundResultResponse wrongResult = gameService.submitAnswer(created.id(), round2.roundId(), new AnswerRequest(wrongIndex));
+        RoundResultResponse wrongResult = resolve(created.id(), round2.roundId(), new AnswerRequest(wrongIndex));
 
         assertThat(wrongResult.correct()).isFalse();
         assertThat(wrongResult.player().livesRemaining()).isLessThan(2);
@@ -171,7 +179,7 @@ class GameServiceIntegrationTest {
 
         Song anchorSong =
                 gameRoundRepository.findByIdWithSong(started.currentRound().roundId()).orElseThrow().getSong();
-        RoundResultResponse anchorResult = gameService.submitAnswer(
+        RoundResultResponse anchorResult = resolve(
                 created.id(),
                 started.currentRound().roundId(),
                 new AnswerRequest(null, anchorSong.getId(), anchorSong.getEffectiveYear()));
@@ -185,7 +193,7 @@ class GameServiceIntegrationTest {
         int wrongIndex = findGuaranteedWrongIndex(created.id(), round2.roundId(), playerId);
 
         // Wrong placement still loses a life, but the correct guess grants one right back.
-        RoundResultResponse result = gameService.submitAnswer(
+        RoundResultResponse result = resolve(
                 created.id(),
                 round2.roundId(),
                 new AnswerRequest(wrongIndex, round2Song.getId(), round2Song.getEffectiveYear()));
@@ -205,7 +213,7 @@ class GameServiceIntegrationTest {
         Song wrongGuessSong =
                 songRepository.findAll().stream().filter(s -> !s.getId().equals(mysterySongId)).findFirst().orElseThrow();
 
-        RoundResultResponse anchorResult = gameService.submitAnswer(
+        RoundResultResponse anchorResult = resolve(
                 created.id(), started.currentRound().roundId(), new AnswerRequest(null, wrongGuessSong.getId(), 1900));
 
         assertThat(anchorResult.guessCorrect()).isFalse();
@@ -221,7 +229,7 @@ class GameServiceIntegrationTest {
 
         RoundPendingResponse round2 = gameService.nextRound(created.id());
         int wrongIndex = findGuaranteedWrongIndex(created.id(), round2.roundId(), playerId);
-        RoundResultResponse result = gameService.submitAnswer(created.id(), round2.roundId(), new AnswerRequest(wrongIndex));
+        RoundResultResponse result = resolve(created.id(), round2.roundId(), new AnswerRequest(wrongIndex));
 
         assertThat(result.correct()).isFalse();
         assertThat(result.gameStatus()).isEqualTo(GameStatus.FINISHED);

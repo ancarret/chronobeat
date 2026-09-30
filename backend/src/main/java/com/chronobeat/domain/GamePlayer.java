@@ -28,6 +28,13 @@ public class GamePlayer {
     @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
+    /** SHA-256 of the secret an online player presents to act; null on shared-device games. */
+    @Column(name = "token_hash", length = 64, updatable = false)
+    private String tokenHash;
+
+    @Column(name = "is_host", nullable = false)
+    private boolean host;
+
     /** Null for guests, i.e. players typed in by name on a shared device. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id")
@@ -77,6 +84,26 @@ public class GamePlayer {
 
     public void linkProfile(Profile profile) {
         this.profile = profile;
+    }
+
+    public void assignSeat(int playerOrder) {
+        this.playerOrder = playerOrder;
+    }
+
+    public void secureWith(String tokenHash) {
+        this.tokenHash = tokenHash;
+    }
+
+    public void makeHost() {
+        this.host = true;
+    }
+
+    public String getTokenHash() {
+        return tokenHash;
+    }
+
+    public boolean isHost() {
+        return host;
     }
 
     public Profile getProfile() {

@@ -5,27 +5,17 @@ import com.chronobeat.dto.profile.ProfileCreatedResponse;
 import com.chronobeat.dto.profile.ProfileResponse;
 import com.chronobeat.exception.InvalidProfileTokenException;
 import com.chronobeat.repository.ProfileRepository;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.HexFormat;
+import com.chronobeat.util.SecretTokens;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Account-less identity. A profile is a nickname plus a random 256-bit secret handed to
- * the browser once; the server keeps only the SHA-256 of it. Because the token is
- * high-entropy there is nothing to brute-force, so a plain fast hash (no salt or stretching)
- * is the right tool here, unlike for human-chosen passwords.
+ * the browser once; the server keeps only its SHA-256 (see {@link SecretTokens}).
  */
 @Service
 public class ProfileService {
-
-    private static final SecureRandom RANDOM = new SecureRandom();
-    private static final int TOKEN_BYTES = 32;
 
     private final ProfileRepository profileRepository;
 
@@ -35,11 +25,8 @@ public class ProfileService {
 
     @Transactional
     public ProfileCreatedResponse create(String nickname) {
-        byte[] raw = new byte[TOKEN_BYTES];
-        RANDOM.nextBytes(raw);
-        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
-
-        Profile profile = profileRepository.saveAndFlush(new Profile(nickname.trim(), hash(token)));
+        String token = SecretTokens.generate();
+        Profile profile = profileRepository.saveAndFlush(new Profile(nickname.trim(), SecretTokens.hash(token)));
         return new ProfileCreatedResponse(profile.getId(), profile.getNickname(), token);
     }
 
@@ -49,7 +36,7 @@ public class ProfileService {
         if (token == null || token.isBlank()) {
             return Optional.empty();
         }
-        return profileRepository.findByTokenHash(hash(token.trim()));
+        return profileRepository.findByTokenHash(SecretTokens.hash(token.trim()));
     }
 
     @Transactional(readOnly = true)
@@ -66,14 +53,5 @@ public class ProfileService {
 
     public ProfileResponse toResponse(Profile profile) {
         return new ProfileResponse(profile.getId(), profile.getNickname(), profile.getCreatedAt());
-    }
-
-    static String hash(String token) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is required by the JVM spec", e);
-        }
     }
 }

@@ -150,4 +150,40 @@ class SongSelectionServiceTest {
 
         assertThat(selected).isEqualTo(closeBy);
     }
+
+    @Test
+    void sharedSongAvoidsArtistsRecentlyPlayedAnywhereAtTheTable() {
+        Game game = gameWithSettings(Difficulty.NORMAL);
+        game.addPlayer(new GamePlayer("P1", 0, 3));
+        game.addPlayer(new GamePlayer("P2", 1, 3));
+
+        Song recentArtistSong = song("Queen", 1980);
+        Song otherSong = song("Abba", 1979);
+        when(songRepository.findAll(any(Specification.class))).thenReturn(List.of(recentArtistSong, otherSong));
+        when(gameRoundRepository.findUsedSongIdsByGameId(any())).thenReturn(List.of());
+        // One shared round is stored once per player, so the same artist shows up twice in the history.
+        when(gameRoundRepository.findArtistHistoryByGameId(any())).thenReturn(List.of("Queen", "Queen"));
+
+        assertThat(service.selectSharedSong(game).getArtist()).isEqualTo("Abba");
+    }
+
+    @Test
+    void sharedSongDifficultyIsMeasuredAgainstEveryonesTimeline() {
+        Game game = gameWithSettings(Difficulty.HARD);
+        GamePlayer p1 = new GamePlayer("P1", 0, 3);
+        GamePlayer p2 = new GamePlayer("P2", 1, 3);
+        game.addPlayer(p1);
+        game.addPlayer(p2);
+        p1.addToTimeline(new TimelineEntry(song("Nirvana", 1991), 0, 1));
+        p2.addToTimeline(new TimelineEntry(song("Beatles", 1965), 0, 1));
+
+        Song nearSecondPlayersCard = song("Kinks", 1966);
+        Song nearNobody = song("Daft Punk", 1978);
+        when(songRepository.findAll(any(Specification.class))).thenReturn(List.of(nearNobody, nearSecondPlayersCard));
+        when(gameRoundRepository.findUsedSongIdsByGameId(any())).thenReturn(List.of());
+        when(gameRoundRepository.findArtistHistoryByGameId(any())).thenReturn(List.of());
+
+        // Hard means a close call for somebody: 1966 sits right next to P2's 1965.
+        assertThat(service.selectSharedSong(game)).isEqualTo(nearSecondPlayersCard);
+    }
 }

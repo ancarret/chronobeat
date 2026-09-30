@@ -8,6 +8,9 @@ import java.util.UUID;
  * excludes title/artist/year/album/genre/externalId of the mystery song &mdash;
  * only the preview URL and the current player's own (already-revealed) timeline
  * are exposed. See README "Preventing answer leakage".
+ *
+ * @param answerSecondsRemaining time left to answer, computed by the server so clients need no
+ *     synchronised clock; null when the game is untimed
  */
 public record RoundPendingResponse(
         UUID roundId,
@@ -20,4 +23,5 @@ public record RoundPendingResponse(
         int previewPlaySeconds,
         List<TimelineEntryResponse> timeline,
         int allowedPositionCount,
-        int livesRemaining) {}
+        int livesRemaining,
+        Integer answerSecondsRemaining) {}
