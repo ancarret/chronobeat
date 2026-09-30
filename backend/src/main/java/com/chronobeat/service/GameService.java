@@ -413,6 +413,30 @@ public class GameService {
         }
     }
 
+    // ------------------------------------------------------------------ abandoned rooms
+
+    /**
+     * Online games nobody has touched for a long while: rooms never started before {@code lobbyCutoff},
+     * running games idle since {@code activeCutoff}. Solo and shared-device games are never included;
+     * a run left open on somebody's phone is theirs to resume.
+     */
+    @Transactional(readOnly = true)
+    public List<UUID> findAbandonedOnlineGames(Instant lobbyCutoff, Instant activeCutoff) {
+        List<Game> stale = new ArrayList<>(gameRepository.findByStatusInAndUpdatedAtBefore(List.of(GameStatus.CREATED), lobbyCutoff));
+        stale.addAll(gameRepository.findByStatusInAndUpdatedAtBefore(List.of(GameStatus.ACTIVE), activeCutoff));
+        return stale.stream().filter(Game::isOnline).map(Game::getId).toList();
+    }
+
+    /** Ends an abandoned online game so its room code is released. */
+    @Transactional
+    public void closeAbandoned(UUID gameId) {
+        Game game = lockGame(gameId);
+        if (game.getStatus() != GameStatus.FINISHED) {
+            game.finish();
+            gameEvents.publish(gameId, GameEventType.GAME_FINISHED);
+        }
+    }
+
     // ------------------------------------------------------------------ advancing
 
     /** Convenience for shared-device play and tests: deals the next round and returns the first pending one. */

@@ -1,0 +1,5 @@
+# Applied by @ActiveProfiles("test"). The sweeps run on a timer in production; tests call the
+# services they drive directly, so a background thread never races their assertions.
+chronobeat:
+  scheduling:
+    enabled: false

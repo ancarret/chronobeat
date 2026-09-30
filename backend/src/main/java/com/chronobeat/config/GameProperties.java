@@ -23,6 +23,12 @@ public class GameProperties {
     /** How many recent distinct artists the selection engine tries to avoid repeating. */
     private int recentArtistAvoidanceWindow = 3;
 
+    /**
+     * Time limit per round for online rooms that didn't pick one. Online games must run on a clock,
+     * otherwise one player who closes the tab would stall the whole table forever.
+     */
+    private int onlineAnswerSeconds = 45;
+
     public int getDefaultMaxLives() {
         return defaultMaxLives;
     }
@@ -61,6 +67,14 @@ public class GameProperties {
 
     public void setPreviewPlaySeconds(int previewPlaySeconds) {
         this.previewPlaySeconds = previewPlaySeconds;
+    }
+
+    public int getOnlineAnswerSeconds() {
+        return onlineAnswerSeconds;
+    }
+
+    public void setOnlineAnswerSeconds(int onlineAnswerSeconds) {
+        this.onlineAnswerSeconds = onlineAnswerSeconds;
     }
 
     public int getRecentArtistAvoidanceWindow() {

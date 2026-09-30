@@ -31,6 +31,14 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
     @EntityGraph(attributePaths = "players")
     Optional<Game> findWithPlayersByRoomCodeAndStatus(String roomCode, GameStatus status);
 
+    /**
+     * Locks a room found by its code. The players are deliberately not fetched in the same query, so
+     * they are read <em>after</em> the lock is held and reflect every join that committed before us.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select g from Game g where g.roomCode = :roomCode and g.status = :status")
+    Optional<Game> lockByRoomCodeAndStatus(String roomCode, GameStatus status);
+
     boolean existsByRoomCodeAndStatusNot(String roomCode, GameStatus status);
 
     List<Game> findByStatusInAndUpdatedAtBefore(Collection<GameStatus> statuses, Instant before);

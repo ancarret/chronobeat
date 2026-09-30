@@ -55,6 +55,12 @@ chronobeat:
     max-streak-bonus-level: 10
     preview-play-seconds: 12
     recent-artist-avoidance-window: 3
+    online-answer-seconds: 45
+
+  # Background sweeps: round timeouts and cleanup of abandoned rooms. Disabled in tests, which
+  # drive those services directly so they stay deterministic.
+  scheduling:
+    enabled: true
 
 logging:
   level:
