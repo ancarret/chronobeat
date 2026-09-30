@@ -88,6 +88,9 @@ export class Game {
   private watchedPlayerId: string | null = null;
   private timedRevealRound: number | null = null;
 
+  /** The record shrinks on phones so the timeline, the thing you actually tap, stays on screen. */
+  protected readonly vinylSize = window.matchMedia?.('(max-width: 719px)').matches ? 92 : 132;
+
   protected readonly game = computed(() => this.state()?.game ?? null);
   protected readonly round = computed(() => this.state()?.round ?? null);
   protected readonly summary = computed(() => this.state()?.summary ?? null);

@@ -58,7 +58,7 @@
         }
 
         <section class="mystery-card" [class.playing]="audioPlaying()">
-          <app-vinyl [size]="132" mark="?" [spinning]="audioPlaying()" />
+          <app-vinyl [size]="vinylSize" mark="?" [spinning]="audioPlaying()" />
           <div class="mystery-body">
             <h2>{{ r.anchorRound ? 'Listen — this starts your timeline' : 'Mystery song' }}</h2>
             <p class="mystery-sub">

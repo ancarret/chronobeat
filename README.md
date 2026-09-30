@@ -6,13 +6,14 @@ This is an original portfolio project inspired by the general concept of physica
 
 | | | |
 |---|---|---|
-| ![Home](docs/screenshots/home.png) | ![Setup](docs/screenshots/setup.png) | ![Gameplay](docs/screenshots/gameplay.png) |
+| ![Home](docs/screenshots/home.png) | ![Setup](docs/screenshots/setup.png) | ![Online lobby](docs/screenshots/lobby.png) |
+| ![Placing a card](docs/screenshots/gameplay.png) | ![Round reveal](docs/screenshots/reveal.png) | |
 
-<sub>Screenshots are from an actual running instance of this repo, seeded with real Apple Music catalog data.</sub>
+<sub>Screenshots are from an actual running instance of this repo, seeded with real Apple Music catalog data: the home screen, a shared-device game being set up, an online room's lobby, placing a card, and the reveal with two players.</sub>
 
 ## Why this exists
 
-Physical chronology card games have a fixed deck: play enough times and you've memorized it. Chronobeat solves that by drawing from a growing, filterable catalog (genre, region, decade, difficulty) instead of a box of 300 cards — solo or pass-the-device local multiplayer, replayable indefinitely.
+Physical chronology card games have a fixed deck: play enough times and you've memorized it. Chronobeat solves that by drawing from a growing, filterable catalog (genre, region, decade, difficulty) instead of a box of 300 cards — solo, around one shared phone, or online from separate devices, replayable indefinitely.
 
 ## How a round works
 
@@ -20,14 +21,30 @@ Physical chronology card games have a fixed deck: play enough times and you've m
 2. You place it on your timeline: before your earliest song, between two songs, or after your latest one.
 3. The backend validates the position against the *real* release year and reveals the song.
 4. Correct → it joins your timeline, and the next round gets a little harder. Incorrect → you lose a life, and it's discarded.
-5. Repeat until you run out of lives (or hit an optional round cap).
+5. Repeat until you run out of lives, hit an optional round cap, or reach the goal (see below).
 
 The very first round of a fresh timeline is a special **anchor round**: there's nothing to compare it against yet, so it's just revealed and placed automatically — no guess, no score impact.
 
+### Two ways to deal, three ways to sit
+
+With more than one player, the table picks how songs are dealt:
+
+- **Take turns** — every turn is one player's own song, placed on their own timeline. The classic party rhythm.
+- **Same songs** — every player hears the *same* song each round and places it on their own timeline. Because nobody gets an easier card, it is a fair race; the natural goal is **first to N cards** (10 by default).
+
+…and where they sit:
+
+- **Solo** — one player; an optional goal ("reach 15 cards") replaces the lives-based ending.
+- **Same device** — 2–8 players pass one phone. A hand-over screen hides each player's timeline from the others.
+- **Online** — a host opens a room, friends join from their own phones with a 4-letter code or a shared link, and everyone plays live.
+
+In *Same songs*, your placement is only **locked in** and nothing is judged until every player has answered (or the clock runs out), so no result can leak to someone still thinking. The whole table then sees the reveal together.
+
 ## Features
 
-- **Solo mode**: build the longest timeline you can before your lives run out.
-- **Local multiplayer**: 2–8 players pass one device; each builds their own timeline from the same round-robin game.
+- **Solo, same-device and online play**, each with either play style, an optional first-to-N goal, and a per-round clock (always on for online rooms, so a closed tab can't stall the table).
+- **Online rooms**: short consonant-only codes (they can't spell words), shareable links, a live lobby with a connected indicator, host-only start and remove, per-player secret tokens, and rejoining the same seat after a refresh.
+- **Anonymous profiles and a record book**: no sign-up; your browser holds a secret token and the server keeps only its hash. Longest timeline, best score and streak, accuracy by decade and genre, recent games, and "new record!" callouts on the results screen. A recovery code moves your profile to another device.
 - **Configurable pool**: region, genre, decade/custom year range, and a difficulty setting that biases song selection toward wider (easy) or tighter (hard) chronological gaps around your existing timeline — see [Difficulty](#difficulty-a-defensible-alternative-to-fake-popularity).
 - **Scoring**: base points + a streak bonus, tracked accuracy, best streak, timeline length.
 - **~3,000-song catalog** ingested from real Apple Music metadata out of the box (see [Development data](#development-data--catalog-ingestion)), spanning the 1950s–2020s across a dozen genres.
@@ -41,9 +58,14 @@ flowchart TB
     API["REST API<br/>(Spring MVC + Bean Validation)"]
     subgraph Backend["Spring Boot — modular monolith"]
         API --> GameService
+        API --> GameStateService["GameStateService<br/>(per-player read model)"]
+        API --> RoomService
+        API --> ProfileService
         GameService --> SongSelectionService
         GameService --> TimelineValidationService
         GameService --> ScoringService
+        GameService -. "GameChangedEvent<br/>(after commit)" .-> EventHub["GameEventHub<br/>(SSE + presence)"]
+        RoomService -. events .-> EventHub
         SongSelectionService --> SongRepo[(SongRepository)]
         GameService --> GameRepo[(GameRepository /<br/>GameRoundRepository)]
         CatalogIngestionService --> MusicProvider["MusicProvider<br/>(interface)"]
@@ -53,6 +75,7 @@ flowchart TB
     Apple["Apple / iTunes<br/>Search API"]
 
     Browser -- HTTPS/JSON --> API
+    EventHub -- "Server-Sent Events<br/>('something changed')" --> Browser
     SongRepo --> DB
     GameRepo --> DB
     AppleMusicProvider -- HTTPS --> Apple
@@ -70,8 +93,11 @@ com.chronobeat
 ├── dto               Request/response records, deliberately separate from entities
 ├── domain            Entities + enums (Game, GamePlayer, GameRound, TimelineEntry, Song, ...)
 ├── repository        Spring Data JPA + JPA Specifications for song filtering
-├── service           GameService (orchestration), SongSelectionService, TimelineValidationService,
-│                     ScoringService, CatalogIngestionService, GenreNormalizer
+├── service           GameService (orchestration), GameStateService (per-player read model),
+│                     RoomService, ProfileService/ProfileStatsService, PlayerAuthenticator,
+│                     SongSelectionService, TimelineValidationService, ScoringService,
+│                     CatalogIngestionService, GenreNormalizer, GameMaintenanceScheduler
+├── event             GameEvents → GameChangedEvent → GameEventHub (SSE) + PresenceRegistry
 ├── mapper            Entity → DTO conversion, kept out of controllers and services
 ├── integration.music MusicProvider abstraction + the Apple/iTunes implementation
 ├── exception         Domain exceptions + a single @RestControllerAdvice
@@ -86,8 +112,9 @@ com.chronobeat
 
 This is enforced at the **API contract level**, not the UI:
 
-- `GET /rounds/current` returns `RoundPendingResponse` — preview URL, the player's *own already-revealed* timeline, allowed position count. There is no field for title/artist/year/album/genre of the mystery song; the DTO class doesn't have one to accidentally serialize.
-- Only `POST /rounds/{id}/answer` — after the round is resolved server-side — returns `RoundResultResponse`, which includes the `SongRevealResponse`.
+- While a player is answering, `GET /state` carries a `RoundPendingResponse` — preview URL, the player's *own already-revealed* timeline, allowed position count. There is no field for title/artist/year/album/genre of the mystery song; the DTO class doesn't have one to accidentally serialize.
+- The song's identity appears only in a `RoundSummaryResponse`, which is built exclusively from rounds that are already **resolved**.
+- In a *Same songs* round, `POST /answer` merely **locks** the placement (`resolved: false`). Correctness, score and lives are not computed — they don't even exist in the database — until the last player has answered or the clock ran out, so nothing can leak to someone still thinking. The tests assert this directly, and an HTTP-level test checks that the JSON a player receives never contains the mystery title.
 - The backend independently validates `insertPosition`; it never trusts (or even accepts) a claimed "correct year" from the client.
 
 ### Timeline validation (the most important domain rule)
@@ -98,9 +125,22 @@ An insertion index `i` (0 = before the earliest song, N = after the latest) is c
 
 The brief explicitly rules out fabricating a "popularity" score the iTunes API can't actually back up. Instead, `SongSelectionService` re-ranks the (already filtered) candidate pool by how far each candidate's year is from the player's *existing* timeline entries: **Easy** keeps the widest gaps (unambiguous placement), **Hard** keeps the narrowest (genuinely close calls), **Normal** leaves the pool unweighted. This is a chronological-spacing heuristic, not a claim about which songs are more "famous."
 
+### One read model for every screen
+
+`GET /api/games/{id}/state` returns one player's complete view — the **phase** they are in (`LOBBY`, `ANSWERING`, `WAITING`, `REVEAL`, `FINISHED`) and exactly what that phase may show. Solo, shared-device and online games, in either play style, all render from it, so there is a single state machine on the client instead of a set of special cases. A refresh, a sleeping phone or a missed event can never leave a screen out of step, because the client never patches local state: it just asks again.
+
+### Live updates: notify, then re-fetch
+
+Online tables are told about changes over **Server-Sent Events** (`GET /api/games/{id}/events`). The events carry no game data, only "something changed"; on each one the client re-fetches its state. That makes a lossy or reordered stream harmless, needs no bidirectional protocol (actions are ordinary REST calls, the browser's `EventSource` reconnects by itself), and keeps events tiny. They are published *after the transaction commits*, so a client woken by one always finds the new state. A heartbeat keeps proxies from closing idle streams, and a slow client-side poll backs the stream up.
+
+The hub is in memory, which is right for one backend instance (a single Render service). Scaling out would put a shared broker (Redis pub/sub, Postgres `LISTEN/NOTIFY`) behind `GameEventHub`.
+
 ### Concurrency & idempotency
 
-- `GameRound` and `Game` carry a `@Version` column (optimistic locking). A duplicate answer submission that races past the initial status check still gets caught at commit time and mapped to `409 Conflict`.
+- Every state-changing call first takes a **row lock on the game** (`SELECT … FOR UPDATE`). Two players locking in at the same instant are therefore handled one after the other; without it, each transaction could see the other as "not answered yet" and the round would never resolve.
+- "Everybody taps Next" is safe: the client sends the round it just watched (`?after=N`), and if the game already moved past it the call is a no-op instead of skipping a round. Online reveals can't be skipped in their first 3 seconds, and move on by themselves after 12.
+- Online players who stop answering are timed out by a background sweep and count as a miss; abandoned rooms are closed after a while so their codes can be reused.
+- `GameRound` and `Game` carry a `@Version` column (optimistic locking) as a second line of defence. A duplicate answer submission that races past the initial status check still gets caught at commit time and mapped to `409 Conflict`.
 - Inserting a new timeline entry shifts existing positions in the same transaction Hibernate flushes inserts before updates, so the DB's `(player, position)` uniqueness constraint is `DEFERRABLE INITIALLY DEFERRED` — checked at commit, not per-statement. (This was caught by the Testcontainers integration test, not guessed up front — see `V1__init_schema.sql`.)
 
 ## Database model
@@ -111,9 +151,15 @@ erDiagram
     SONGS ||--o{ GAME_ROUNDS : "referenced by"
     GAMES ||--o{ GAME_PLAYERS : has
     GAMES ||--o{ GAME_ROUNDS : has
+    PROFILES |o--o{ GAME_PLAYERS : "plays as"
     GAME_PLAYERS ||--o{ TIMELINE_ENTRIES : owns
     GAME_PLAYERS ||--o{ GAME_ROUNDS : "takes turn in"
 
+    PROFILES {
+        uuid id PK
+        varchar nickname
+        varchar token_hash "SHA-256 of the secret; never the secret"
+    }
     SONGS {
         uuid id PK
         varchar provider
@@ -127,8 +173,12 @@ erDiagram
     }
     GAMES {
         uuid id PK
-        varchar mode
+        varchar mode "SOLO, LOCAL_MULTIPLAYER, ONLINE_MULTIPLAYER"
         varchar status
+        varchar play_style "TURN_BASED or SHARED_SONGS"
+        int target_timeline_size "nullable: first to N"
+        int answer_seconds "nullable: per-round clock"
+        varchar room_code "online rooms only"
         varchar difficulty
         int max_lives
         int max_rounds "nullable"
@@ -138,10 +188,13 @@ erDiagram
     GAME_PLAYERS {
         uuid id PK
         uuid game_id FK
+        uuid profile_id FK "nullable: guests"
         varchar display_name
         int player_order
         int score
         int lives_remaining
+        varchar token_hash "online seat secret, hashed"
+        boolean is_host
     }
     TIMELINE_ENTRIES {
         uuid id PK
@@ -154,13 +207,14 @@ erDiagram
         uuid game_id FK
         uuid game_player_id FK
         uuid song_id FK
+        int round_number
         boolean is_anchor_round
-        varchar status
+        varchar status "PENDING, LOCKED, RESOLVED"
         bigint version
     }
 ```
 
-`Song` rows are a durable, shared catalog — never deleted when a game ends. Solo and local-multiplayer are the *same* model: solo is simply a one-player `Game`. Every player has their own `TimelineEntry` list; `GameRound` records whose turn it is and which song they were played.
+`Song` rows are a durable, shared catalog — never deleted when a game ends. Solo, shared-device and online play are the *same* model: solo is simply a one-player `Game`. Every player has their own `TimelineEntry` list. A `GameRound` is one player's turn on one song: a turn-based round has a single row, while a *Same songs* round has one row per player, all with the same `song_id` and `round_number`.
 
 ## Music provider integration & catalog quality
 
@@ -186,14 +240,25 @@ Full interactive docs live at `/swagger-ui.html` (OpenAPI JSON at `/v3/api-docs`
 
 | Method | Path | Purpose |
 |---|---|---|
-| `POST` | `/api/games` | Create a game (`CREATED`) |
-| `POST` | `/api/games/{id}/start` | `CREATED` → `ACTIVE`, deals round 1 |
+| `POST` | `/api/games` | Create a solo or shared-device game (`CREATED`). `X-Profile-Token` makes it count towards your records |
+| `POST` | `/api/games/{id}/start` | `CREATED` → `ACTIVE`, deals round 1 (host only for online rooms) |
 | `GET` | `/api/games/{id}` | Game + player state |
-| `GET` | `/api/games/{id}/rounds/current` | The pending round (safe to re-fetch after a refresh) |
-| `POST` | `/api/games/{id}/rounds/{roundId}/answer` | Resolve a round, reveal the song |
-| `POST` | `/api/games/{id}/next-round` | Advance turn order, deal the next round |
+| `GET` | `/api/games/{id}/state?playerId=` | **One player's complete view**: phase, current round or reveal, who is being waited on |
+| `GET` | `/api/games/{id}/events?playerId=` | Server-Sent Events: `changed` whenever anything in the game changes |
+| `GET` | `/api/games/{id}/rounds/current?playerId=` | The pending round of a player (safe to re-fetch after a refresh) |
+| `POST` | `/api/games/{id}/rounds/{roundId}/answer` | Lock in a placement; the round resolves once every player of it has answered |
+| `POST` | `/api/games/{id}/next-round?after=N` | Deal the next round (idempotent: a no-op if it was already dealt) |
 | `GET` | `/api/games/{id}/timeline?playerId=` | A player's confirmed timeline |
-| `GET` | `/api/games/{id}/results` | Final standings (once `FINISHED`) |
+| `GET` | `/api/games/{id}/results` | Final standings, winner (or tie) and records broken (once `FINISHED`) |
+| `POST` | `/api/rooms` | Open an online room and become its host; returns your secret `playerToken` once |
+| `GET` | `/api/rooms/{code}` | Preview an open room before joining |
+| `POST` | `/api/rooms/{code}/join` | Take a seat; returns your `playerToken` once |
+| `POST` | `/api/games/{id}/leave` | Leave a room that hasn't started |
+| `DELETE` | `/api/games/{id}/players/{playerId}` | Host only: remove a player from the lobby |
+| `POST` | `/api/profiles` | Create an anonymous profile; returns the secret token once |
+| `GET` / `PUT` | `/api/profiles/me` | Read / rename the profile owning `X-Profile-Token` (also how a recovery code is verified) |
+| `GET` | `/api/profiles/me/stats` | Records, accuracy by decade/genre, recent games |
+| `GET` | `/api/songs/search?query=` | Catalog search behind the "guess the song" bonus (never returns the year) |
 | `GET` | `/api/admin/catalog/size` | Current catalog size |
 | `POST` | `/api/admin/catalog/ingest/seed` | Re-run seed ingestion (requires `X-Admin-Key`) |
 
@@ -249,7 +314,9 @@ cd frontend && npm test       # Vitest
 
 Backend coverage focuses on domain-critical logic per the brief's priority order: `TimelineValidationServiceTest` is exhaustive (empty/single/duplicate-year/tie boundaries), plus `ScoringServiceTest`, `GamePlayerTest`/`GameTest` (elimination & finish-condition rules), `SongSelectionServiceTest` (artist-avoidance and difficulty-spacing behavior via a fake `RandomProvider`, no flaky real randomness), and `CatalogIngestionServiceTest` (title-normalization dedup logic, including the deliberately tricky case of a title that legitimately *starts* with a parenthetical). `GameServiceIntegrationTest` runs the full create → start → anchor round → correct/incorrect placement → elimination → results flow against a real, ephemeral Postgres container — this is what caught the deferred-constraint bug mentioned above.
 
-Frontend tests target the logic that isn't purely template rendering: `GameSetup`'s submit-eligibility rules, `AudioPlayer`'s playback-cap-at-N-seconds behavior, `Timeline`'s slot generation and click-to-select wiring.
+The newer features have their own suites, all against a real Postgres: `SharedSongsIntegrationTest` (a shared round waiting on the whole table without leaking anything, the first-to-N race and ties, timeouts, eliminated players, idempotent "next"), `ProfileIntegrationTest` (token issuance, records, per-game "record broken" verdicts), `OnlineRoomIntegrationTest` (lobby rules, host-only actions, per-player tokens, the reveal lock) and `OnlineHttpFlowTest`, which plays a room over **real HTTP with a live SSE stream** and asserts the JSON a player receives never contains the mystery title. `GameEventHubTest` pins down presence bookkeeping — a bug that only showed up when two real browsers played a full game.
+
+Frontend tests target the logic that isn't purely template rendering: `GameSetup`'s rules (goals, clocks, online requirements), the **game screen's state machine** (hand-over screens, waiting, reveal, moving on, error recovery), `RoundResult` and `PlayerStrip` for one or many players, `AudioPlayer`'s playback-cap-at-N-seconds behavior, `Timeline`'s slots and reveal markers, and the services and interceptors that keep secret tokens away from third-party URLs.
 
 ## Docker
 
@@ -269,18 +336,22 @@ Both `backend/Dockerfile` and `frontend/Dockerfile` are multi-stage and run as a
 
 - **iTunes rate limiting**: sustained bursts (e.g. re-running the full seed ingestion) eventually get 403'd by Apple's edge; the app degrades gracefully (skips that query, keeps going) rather than crashing, but a production system pulling from this provider at scale would want real exponential backoff/retry, not just a fixed courtesy delay.
 - **No drag-and-drop**: placement is click/tap-to-select (explicitly allowed by the brief for mobile reliability). Drag-and-drop is a reasonable follow-up for desktop.
-- **Guest play only**: no persistent accounts, so no cross-session statistics dashboard yet (see roadmap). Game state lives entirely in Postgres keyed by a random `gameId`, not tied to any user.
-- **Difficulty is a spacing heuristic**, not a popularity model — see [above](#difficulty-a-defensible-alternative-to-fake-popularity) for why that's a deliberate choice, not an oversight.
+- **Profiles are anonymous**: identity is a secret token in the browser, not an account. Clearing site data loses it unless you saved the recovery code shown on the profile page; there is no email, password or "forgot" flow, by design.
+- **Online state is in one instance's memory**: the event hub (open streams, who is connected) lives in the backend process. That is right for a single Render service and restarts are harmless (streams reconnect and clients re-fetch), but running several instances would need a shared broker first — see [Live updates](#live-updates-notify-then-re-fetch).
+- **No unlimited lives yet**: a race can still end early for a player who runs out of lives. Setting lives to the maximum is the workaround.
+- **Difficulty is a spacing heuristic**, not a popularity model — see [above](#difficulty-a-defensible-alternative-to-fake-popularity) for why that's a deliberate choice, not an oversight. In *Same songs* games it is measured against everyone's timeline.
 
 ## Roadmap
 
-Everything below is architected for (the `MusicProvider` interface, the N-player `Game` model, the `GameMode` enum) but intentionally not built in this pass, so the core solo/local-multiplayer experience could be finished to a high standard first:
+Built so far on top of the original solo/local game: the visual overhaul, anonymous profiles with a record book, the *Same songs* style with first-to-N races, and online rooms with live events. Still ahead (the `MusicProvider` interface and the profile model are the seams for most of it):
 
-- Persistent accounts + a statistics dashboard (accuracy by decade/genre, this is the natural next step once game history needs to outlive a browser tab)
+- Friends and leaderboards: friend codes, a global "longest timeline" board, and per-friend comparisons — profiles already carry a stable public id
+- Daily challenge: the same songs for everyone that day, with its own ranking
+- Reconnection polish for online play (a "waiting for X to come back" state) and spectators
+- Drag-and-drop placement on desktop
 - Playlist import (`PlaylistImporter` abstraction, same pattern as `MusicProvider`)
-- Online multiplayer via Spring WebSocket/STOMP + room codes
 - A second `MusicProvider` implementation, to prove the abstraction actually decouples cleanly
-- PWA support, daily challenge, shareable results
+- PWA support and shareable results
 
 ## Legal / provider note
 
