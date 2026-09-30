@@ -3,6 +3,15 @@
     <span class="brand-mark" aria-hidden="true"></span>
     <span class="brand-name">{{ config.productName }}</span>
   </a>
+
+  <a class="profile-link" routerLink="/profile" routerLinkActive="active" aria-label="Your profile and records">
+    @if (profiles.profile(); as me) {
+      <span class="avatar" aria-hidden="true">{{ me.nickname.charAt(0).toUpperCase() }}</span>
+      <span class="profile-name">{{ me.nickname }}</span>
+    } @else {
+      <span class="profile-name">Records</span>
+    }
+  </a>
 </header>
 
 <main>

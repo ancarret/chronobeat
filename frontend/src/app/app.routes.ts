@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/results/results').then((m) => m.Results),
   },
   {
+    path: 'profile',
+    loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

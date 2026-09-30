@@ -2,6 +2,9 @@
   @if (error(); as err) {
     <app-error-state title="Couldn't load results" [message]="err.message" (retry)="retry()" />
   } @else if (results(); as r) {
+    @if (brokeARecord(r)) {
+      <app-confetti />
+    }
     <p class="eyebrow">Game over</p>
     <h1>{{ r.players.length > 1 ? 'Final standings' : 'Your run' }}</h1>
 
@@ -12,6 +15,23 @@
             <span class="crown" aria-hidden="true">★</span>
           }
           <h2>{{ player.displayName }}</h2>
+
+          @if (recordsFor(player); as rec) {
+            <ul class="records" aria-label="Personal records">
+              @if (rec.firstGame) {
+                <li class="chip first">First run in your record book</li>
+              }
+              @if (rec.longestTimeline) {
+                <li class="chip new">New longest timeline</li>
+              }
+              @if (rec.bestScore) {
+                <li class="chip new">New best score</li>
+              }
+              @if (rec.bestStreak) {
+                <li class="chip new">New best streak</li>
+              }
+            </ul>
+          }
           <div class="stat-grid">
             <div>
               <span class="value">{{ player.score }}</span>
@@ -43,6 +63,9 @@
 
     <div class="actions">
       <button type="button" class="btn btn-primary btn-lg" (click)="playAgain()">Play again</button>
+      @if (r.records.length > 0) {
+        <a class="btn btn-secondary" routerLink="/profile">Your records</a>
+      }
       <a class="btn btn-secondary" routerLink="/">Back home</a>
     </div>
   } @else {

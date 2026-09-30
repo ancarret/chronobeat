@@ -149,6 +149,12 @@ h1 {
   margin-top: 10px;
 }
 
+.hint {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-faint);
+}
+
 // Pinned to the bottom edge on phones: the form is long and the primary action
 // should never be a scroll away. A gradient keeps the last fields readable under it.
 .start-bar {

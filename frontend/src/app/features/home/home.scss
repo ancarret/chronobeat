@@ -200,3 +200,40 @@ h1 {
     font-size: 0.92rem;
   }
 }
+
+.record-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 18px;
+  margin-top: 26px;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s var(--ease-out);
+
+  strong {
+    color: var(--text);
+    font-family: var(--font-display);
+  }
+
+  .record-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+  }
+
+  &:hover {
+    border-color: var(--brand-primary);
+    transform: translateY(-2px);
+  }
+}

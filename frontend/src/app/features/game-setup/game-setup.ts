@@ -1,8 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize, switchMap } from 'rxjs';
+import { catchError, finalize, of, switchMap } from 'rxjs';
 import { GameService } from '../../core/services/game.service';
+import { ProfileService } from '../../core/services/profile.service';
 import { DECADE_PRESETS, Difficulty, GameMode, GENRE_LABELS, MusicGenre } from '../../core/models/enums';
 import { ApiError, CreateGameRequest } from '../../core/models/game.model';
 import { ErrorState } from '../../shared/components/error-state/error-state';
@@ -23,6 +24,7 @@ const MARKETS: { code: string | null; label: string }[] = [
 })
 export class GameSetup {
   private readonly gameService = inject(GameService);
+  private readonly profiles = inject(ProfileService);
   private readonly router = inject(Router);
 
   protected readonly markets = MARKETS;
@@ -41,12 +43,20 @@ export class GameSetup {
   protected readonly submitting = signal(false);
   protected readonly error = signal<ApiError | null>(null);
 
+  constructor() {
+    // Returning players don't retype their name; player 1 is always "you".
+    const profile = this.profiles.profile();
+    if (profile) {
+      this.playerNames.set([profile.nickname]);
+    }
+  }
+
   setMode(mode: GameMode): void {
     this.mode.set(mode);
     if (mode === 'SOLO') {
       this.playerNames.set([this.playerNames()[0] ?? '']);
     } else if (this.playerNames().length < 2) {
-      this.playerNames.set(['', '']);
+      this.playerNames.set([this.playerNames()[0] ?? '', '']);
     }
   }
 
@@ -103,9 +113,15 @@ export class GameSetup {
       },
     };
 
-    this.gameService
-      .createGame(request)
+    // Player 1 is the signed-in player: their results feed the profile's records. Failing to
+    // reach the profile endpoint must never stop a game, so it degrades to a guest game.
+    this.profiles
+      .ensureProfile(names[0])
       .pipe(
+        catchError(() => of(null)),
+        switchMap((profile) =>
+          this.gameService.createGame({ ...request, profilePlayerIndex: profile ? 0 : null }),
+        ),
         switchMap((game) => this.gameService.startGame(game.id)),
         finalize(() => this.submitting.set(false)),
       )

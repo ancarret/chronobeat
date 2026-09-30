@@ -1,4 +1,5 @@
 import { Difficulty, GameMode, GameStatus, MusicGenre } from './enums';
+import { RecordsBroken } from './profile.model';
 
 export interface GameSettingsRequest {
   market: string | null;
@@ -24,6 +25,8 @@ export interface CreateGameRequest {
   mode: GameMode;
   playerNames: string[];
   settings: GameSettingsRequest;
+  /** Which entry of playerNames is the signed-in profile; omitted for guest games. */
+  profilePlayerIndex?: number | null;
 }
 
 export interface Player {
@@ -126,6 +129,8 @@ export interface GameResults {
   totalRounds: number;
   players: Player[];
   winningPlayerId: string | null;
+  /** One entry per profile-linked player; guests have none. */
+  records: RecordsBroken[];
 }
 
 export interface ApiError {

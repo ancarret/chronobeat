@@ -1,0 +1,163 @@
+<div class="page page-wide profile-page">
+  @if (profile(); as me) {
+    <header class="profile-head">
+      <div class="avatar" aria-hidden="true">{{ initial() }}</div>
+      <div class="identity">
+        @if (editing()) {
+          <form class="rename" (ngSubmit)="saveRename()">
+            <input
+              class="text-input"
+              name="nickname"
+              maxlength="40"
+              aria-label="Nickname"
+              [ngModel]="nicknameDraft()"
+              (ngModelChange)="nicknameDraft.set($event)"
+              (keydown.escape)="editing.set(false)"
+            />
+            <button type="submit" class="btn btn-primary" [disabled]="!nicknameDraft().trim() || savingName()">Save</button>
+            <button type="button" class="btn btn-ghost" (click)="editing.set(false)">Cancel</button>
+          </form>
+        } @else {
+          <h1>{{ me.nickname }}</h1>
+          <button type="button" class="btn-link" (click)="startRename()">Rename</button>
+        }
+        <p class="muted">Your records live on this device. Save the recovery code below to keep them if you switch.</p>
+      </div>
+    </header>
+
+    @if (error(); as err) {
+      <app-error-state title="Couldn't load your records" [message]="err.message" (retry)="retry()" />
+    } @else if (stats(); as s) {
+      @if (s.gamesPlayed === 0) {
+        <div class="card empty">
+          <h2>Your record book is empty</h2>
+          <p>Finish a round or two and your bests will show up here.</p>
+          <a class="btn btn-primary" routerLink="/play">Play a game</a>
+        </div>
+      } @else {
+        <section class="tiles" aria-label="Personal records">
+          <div class="tile highlight">
+            <span class="value">{{ s.longestTimeline }}</span>
+            <span class="label">Longest timeline</span>
+            <span class="sub">cards placed right in one game</span>
+          </div>
+          <div class="tile">
+            <span class="value">{{ s.bestScore | number }}</span>
+            <span class="label">Best score</span>
+          </div>
+          <div class="tile">
+            <span class="value">{{ s.bestStreak }}</span>
+            <span class="label">Best streak</span>
+          </div>
+          <div class="tile">
+            <span class="value">{{ s.accuracy * 100 | number: '1.0-0' }}%</span>
+            <span class="label">Accuracy</span>
+            <span class="sub">{{ s.totalCorrect }} of {{ s.totalCorrect + s.totalIncorrect }} placements</span>
+          </div>
+          <div class="tile">
+            <span class="value">{{ s.gamesPlayed }}</span>
+            <span class="label">Games played</span>
+          </div>
+        </section>
+
+        @if (strongestDecade(); as best) {
+          <p class="insight">
+            You know the <strong>{{ best.label }}</strong> best ({{ best.accuracy * 100 | number: '1.0-0' }}%)
+            @if (weakestDecade(); as worst) {
+              &mdash; and struggle most with the <strong>{{ worst.label }}</strong> ({{ worst.accuracy * 100 | number: '1.0-0' }}%).
+            }
+          </p>
+        }
+
+        <div class="breakdowns">
+          <section class="card breakdown">
+            <h2>Accuracy by decade</h2>
+            @for (bar of decadeBars(); track bar.label) {
+              <div class="bar-row">
+                <span class="bar-label">{{ bar.label }}</span>
+                <div class="bar-track"><div class="bar-fill" [style.width.%]="bar.accuracy * 100"></div></div>
+                <span class="bar-value">{{ bar.correct }}/{{ bar.total }}</span>
+              </div>
+            }
+          </section>
+
+          <section class="card breakdown">
+            <h2>Accuracy by genre</h2>
+            @for (bar of genreBars(); track bar.label) {
+              <div class="bar-row">
+                <span class="bar-label">{{ bar.label }}</span>
+                <div class="bar-track"><div class="bar-fill alt" [style.width.%]="bar.accuracy * 100"></div></div>
+                <span class="bar-value">{{ bar.correct }}/{{ bar.total }}</span>
+              </div>
+            }
+          </section>
+        </div>
+
+        <section class="card recent">
+          <h2>Recent games</h2>
+          <ul>
+            @for (game of s.recentGames; track game.gameId) {
+              <li>
+                <span class="when">{{ game.playedAt | date: 'MMM d, HH:mm' }}</span>
+                <span class="mode">{{ game.mode === 'SOLO' ? 'Solo' : 'Local' }}</span>
+                <span class="stat"><strong>{{ game.timelineSize }}</strong> {{ game.timelineSize === 1 ? 'card' : 'cards' }}</span>
+                <span class="stat"><strong>{{ game.score | number }}</strong> pts</span>
+                <span class="stat">{{ game.accuracy * 100 | number: '1.0-0' }}%</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    } @else {
+      <app-loading-state message="Loading your records…" />
+    }
+
+    <section class="card recovery">
+      <h2>Recovery code</h2>
+      <p class="muted">
+        This code <em>is</em> your profile: anyone with it can play as you. Keep it private, and paste it on another device to
+        bring your records with you.
+      </p>
+      @if (showCode()) {
+        <div class="code-row">
+          <code>{{ me.token }}</code>
+          <button type="button" class="btn btn-secondary" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy' }}</button>
+        </div>
+      } @else {
+        <button type="button" class="btn btn-secondary" (click)="showCode.set(true)">Show my code</button>
+      }
+      <button type="button" class="btn-link sign-out" (click)="signOut()">Forget this profile on this device</button>
+    </section>
+  } @else {
+    <div class="card empty">
+      <h1 class="title">Your record book</h1>
+      <p>
+        Chronobeat remembers your best timelines, streaks and which decades you know. No sign-up: your profile is created the
+        first time you play.
+      </p>
+      <a class="btn btn-primary btn-lg" routerLink="/play">Play your first game</a>
+    </div>
+  }
+
+  <section class="card restore">
+    <h2>Already have a profile?</h2>
+    <p class="muted">Paste the recovery code from your other device to bring your records here.</p>
+    <form class="code-row" (ngSubmit)="restore()">
+      <input
+        class="text-input"
+        name="code"
+        placeholder="Paste your recovery code"
+        autocomplete="off"
+        aria-label="Recovery code"
+        [ngModel]="restoreCode()"
+        (ngModelChange)="restoreCode.set($event)"
+      />
+      <button type="submit" class="btn btn-secondary" [disabled]="!restoreCode().trim() || restoring()">
+        {{ restoring() ? 'Checking…' : 'Restore' }}
+      </button>
+    </form>
+    @if (restoreError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </section>
+</div>

@@ -3,14 +3,16 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { GameService } from '../../core/services/game.service';
-import { ApiError, GameResults, TimelineEntry } from '../../core/models/game.model';
+import { ApiError, GameResults, Player, TimelineEntry } from '../../core/models/game.model';
+import { RecordsBroken } from '../../core/models/profile.model';
+import { Confetti } from '../../shared/components/confetti/confetti';
 import { LoadingState } from '../../shared/components/loading-state/loading-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Timeline } from '../game/components/timeline/timeline';
 
 @Component({
   selector: 'app-results',
-  imports: [RouterLink, DecimalPipe, LoadingState, ErrorState, Timeline],
+  imports: [RouterLink, DecimalPipe, LoadingState, ErrorState, Timeline, Confetti],
   templateUrl: './results.html',
   styleUrl: './results.scss',
 })
@@ -59,5 +61,14 @@ export class Results {
 
   protected sortedPlayers(results: GameResults) {
     return [...results.players].sort((a, b) => b.score - a.score);
+  }
+
+  protected recordsFor(player: Player): RecordsBroken | null {
+    return this.results()?.records.find((r) => r.playerId === player.id) ?? null;
+  }
+
+  /** True when a returning player beat at least one personal best (a first game has nothing to beat). */
+  protected brokeARecord(results: GameResults): boolean {
+    return results.records.some((r) => r.bestScore || r.longestTimeline || r.bestStreak);
   }
 }

@@ -12,6 +12,17 @@
     <div class="cta-row">
       <a class="btn btn-primary btn-lg" routerLink="/play">Play {{ config.productName }}</a>
     </div>
+
+    @if (stats(); as s) {
+      @if (s.gamesPlayed > 0) {
+        <a class="record-strip" routerLink="/profile">
+          <span class="record-label">Your best</span>
+          <span><strong>{{ s.longestTimeline }}</strong> {{ s.longestTimeline === 1 ? 'card' : 'cards' }}</span>
+          <span><strong>{{ s.bestScore | number }}</strong> pts</span>
+          <span><strong>{{ s.bestStreak }}</strong> streak</span>
+        </a>
+      }
+    }
   </div>
 
   <div class="hero-art" aria-hidden="true">
