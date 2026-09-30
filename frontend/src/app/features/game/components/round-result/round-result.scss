@@ -1,27 +1,43 @@
+.reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .reveal-card {
   padding: 28px 24px;
   border-radius: var(--radius-lg);
   background: var(--surface);
   border: 1px solid var(--border);
   text-align: center;
-  animation: pop-in 0.25s ease;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  animation: pop-in 0.35s var(--ease-out) both;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  @media (min-width: 720px) {
+    padding: 28px 36px;
+  }
 }
 
-.reveal-card.correct {
+.correct .reveal-card {
   border-color: var(--success);
-  box-shadow: 0 0 0 1px var(--success), 0 0 28px rgba(52, 211, 153, 0.18);
+  box-shadow:
+    0 0 0 1px var(--success),
+    0 0 32px rgba(52, 211, 153, 0.2);
 }
 
-.reveal-card.incorrect {
+.incorrect .reveal-card {
   border-color: var(--danger);
-  box-shadow: 0 0 0 1px var(--danger), 0 0 28px rgba(251, 113, 133, 0.18);
+  box-shadow:
+    0 0 0 1px var(--danger),
+    0 0 32px rgba(251, 113, 133, 0.2);
 }
 
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(6px);
+    transform: scale(0.96) translateY(8px);
   }
   to {
     opacity: 1;
@@ -37,10 +53,22 @@
   font-weight: 700;
   font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   margin-bottom: 20px;
   background: var(--bg-elevated);
   color: var(--text-muted);
+  animation: badge-pop 0.5s var(--ease-spring) 0.25s both;
+}
+
+@keyframes badge-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .correct .badge {
@@ -57,15 +85,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
+
+  @media (min-width: 720px) {
+    flex-direction: row;
+    justify-content: center;
+    gap: 32px;
+    text-align: left;
+  }
 }
 
+// The cover "flips" into view: the moment of the reveal.
 .artwork {
-  width: 140px;
-  height: 140px;
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
   border-radius: var(--radius-md);
   object-fit: cover;
   box-shadow: var(--shadow-md);
+  animation: flip-in 0.75s var(--ease-out) 0.1s both;
+}
+
+@keyframes flip-in {
+  from {
+    opacity: 0;
+    transform: perspective(700px) rotateY(-95deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(700px) rotateY(0) scale(1);
+  }
 }
 
 .artwork-placeholder {
@@ -73,37 +122,41 @@
   align-items: center;
   justify-content: center;
   color: var(--text-faint);
-  font-size: 2.4rem;
+  font-size: 2.6rem;
   background: var(--bg-elevated);
 }
 
 .song-meta {
+  min-width: 0;
+
   .year {
     font-family: var(--font-display);
     color: var(--brand-primary);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 1.6rem;
+    line-height: 1;
   }
 
   h3 {
-    font-size: 1.3rem;
-    margin-top: 4px;
+    font-size: 1.4rem;
+    margin-top: 8px;
+    line-height: 1.2;
   }
 
-  p {
+  .artist {
     color: var(--text-muted);
     margin-top: 4px;
   }
 }
 
 .feedback {
-  margin-top: 20px;
+  margin-top: 16px;
   color: var(--text-muted);
   font-size: 0.92rem;
 }
 
 .guess-feedback {
-  margin-top: 10px;
+  margin-top: 8px;
   font-size: 0.88rem;
   font-weight: 600;
 
@@ -116,7 +169,22 @@
   }
 }
 
+.recap {
+  h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+}
+
 .continue-btn {
   width: 100%;
-  margin-top: 24px;
+
+  @media (min-width: 720px) {
+    align-self: center;
+    width: auto;
+    min-width: 260px;
+  }
 }

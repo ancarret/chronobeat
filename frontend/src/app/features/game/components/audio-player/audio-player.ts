@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, SimpleChanges, ViewChild, input, signal } from '@angular/core';
+import { Component, ElementRef, OnChanges, SimpleChanges, ViewChild, input, output, signal } from '@angular/core';
 
 /**
  * Custom playback UI over a hidden native <audio> element (no ugly native
@@ -15,6 +15,8 @@ import { Component, ElementRef, OnChanges, SimpleChanges, ViewChild, input, sign
 export class AudioPlayer implements OnChanges {
   readonly previewUrl = input.required<string>();
   readonly maxPlaySeconds = input<number>(12);
+  /** Emits whenever playback starts or stops, so the surrounding UI (e.g. the spinning record) can follow it. */
+  readonly playingChange = output<boolean>();
 
   @ViewChild('audioEl') private audioEl?: ElementRef<HTMLAudioElement>;
 
@@ -25,7 +27,7 @@ export class AudioPlayer implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['previewUrl']) {
-      this.isPlaying.set(false);
+      this.setPlaying(false);
       this.hasPlayed.set(false);
       this.progress.set(0);
       this.loadError.set(false);
@@ -36,20 +38,26 @@ export class AudioPlayer implements OnChanges {
     }
   }
 
+  private setPlaying(playing: boolean): void {
+    if (this.isPlaying() === playing) return;
+    this.isPlaying.set(playing);
+    this.playingChange.emit(playing);
+  }
+
   toggle(): void {
     const audio = this.audioEl?.nativeElement;
     if (!audio) return;
 
     if (this.isPlaying()) {
       audio.pause();
-      this.isPlaying.set(false);
+      this.setPlaying(false);
       return;
     }
 
     audio
       .play()
       .then(() => {
-        this.isPlaying.set(true);
+        this.setPlaying(true);
         this.hasPlayed.set(true);
       })
       .catch(() => this.loadError.set(true));
@@ -71,18 +79,18 @@ export class AudioPlayer implements OnChanges {
     if (audio.currentTime >= cap) {
       audio.pause();
       audio.currentTime = 0;
-      this.isPlaying.set(false);
+      this.setPlaying(false);
       this.progress.set(0);
     }
   }
 
   onEnded(): void {
-    this.isPlaying.set(false);
+    this.setPlaying(false);
     this.progress.set(0);
   }
 
   onError(): void {
     this.loadError.set(true);
-    this.isPlaying.set(false);
+    this.setPlaying(false);
   }
 }

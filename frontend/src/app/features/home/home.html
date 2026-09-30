@@ -1,27 +1,41 @@
-<section class="hero page">
-  <p class="eyebrow">A music chronology game</p>
-  <h1>
-    Hear it first.<br />
-    <span class="accent">Place it right.</span>
-  </h1>
-  <p class="tagline">
-    A mystery song plays. No title, no artist, no year. Slot it into your timeline before the reveal
-    &mdash; get it right and it stays. Build the longest timeline you can.
-  </p>
-  <div class="cta-row">
-    <a class="btn btn-primary btn-lg" routerLink="/play">Play {{ config.productName }}</a>
+<section class="hero page page-wide">
+  <div class="hero-copy">
+    <p class="eyebrow">A music chronology game</p>
+    <h1>
+      Hear it first.<br />
+      <span class="accent">Place it right.</span>
+    </h1>
+    <p class="tagline">
+      A mystery song plays. No title, no artist, no year. Slot it into your timeline before the reveal
+      &mdash; get it right and it stays. Build the longest timeline you can.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary btn-lg" routerLink="/play">Play {{ config.productName }}</a>
+    </div>
   </div>
 
-  <div class="timeline-preview" aria-hidden="true">
-    <div class="chip">1977 &middot; Fleetwood Mac</div>
-    <div class="arrow">→</div>
-    <div class="chip mystery">? &middot; &hellip;</div>
-    <div class="arrow">→</div>
-    <div class="chip">2008 &middot; Coldplay</div>
+  <div class="hero-art" aria-hidden="true">
+    <app-vinyl [size]="210" mark="?" [spinning]="true" />
+    <div class="mini-timeline">
+      <div class="mini-card">
+        <span class="y">1977</span>
+        <span class="t">Dreams</span>
+        <span class="a">Fleetwood Mac</span>
+      </div>
+      <div class="mini-card ghost">
+        <span class="y">?</span>
+        <span class="t">Your song</span>
+      </div>
+      <div class="mini-card">
+        <span class="y">2008</span>
+        <span class="t">Viva la Vida</span>
+        <span class="a">Coldplay</span>
+      </div>
+    </div>
   </div>
 </section>
 
-<section class="how-it-works page">
+<section class="how-it-works page page-wide">
   <h2>How a round works</h2>
   <ol class="steps">
     <li>
@@ -42,7 +56,7 @@
   </ol>
 </section>
 
-<section class="modes page">
+<section class="modes page page-wide">
   <h2>Two ways to play</h2>
   <div class="mode-cards">
     <div class="card mode-card">

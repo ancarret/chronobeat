@@ -19,15 +19,18 @@
         }
 
         @if (activePlayer(); as player) {
-          <app-score-panel [player]="player" [roundNumber]="r.roundNumber" />
+          <app-score-panel [player]="player" [roundNumber]="r.roundNumber" [maxLives]="game()?.settings?.maxLives ?? 0" />
         }
 
-        <section class="mystery-card">
-          <div class="mystery-art" aria-hidden="true">
-            <span>?</span>
+        <section class="mystery-card" [class.playing]="audioPlaying()">
+          <app-vinyl [size]="132" mark="?" [spinning]="audioPlaying()" />
+          <div class="mystery-body">
+            <h2>{{ r.anchorRound ? 'Listen — this starts your timeline' : 'Mystery song' }}</h2>
+            <p class="mystery-sub">
+              {{ r.anchorRound ? 'Your first song is free: just listen, we place it for you.' : 'Listen, then choose where it fits in your timeline.' }}
+            </p>
+            <app-audio-player [previewUrl]="r.previewUrl" [maxPlaySeconds]="r.previewPlaySeconds" (playingChange)="audioPlaying.set($event)" />
           </div>
-          <h2>{{ r.anchorRound ? 'Listen — this starts your timeline' : 'Mystery song' }}</h2>
-          <app-audio-player [previewUrl]="r.previewUrl" [maxPlaySeconds]="r.previewPlaySeconds" />
         </section>
 
         <section class="timeline-section">
@@ -116,6 +119,7 @@
 
     @case ('revealed') {
       @if (lastResult(); as result) {
+        <app-score-panel [player]="result.player" [roundNumber]="round()?.roundNumber ?? 0" [maxLives]="game()?.settings?.maxLives ?? 0" />
         <app-round-result [result]="result" [isGameOver]="isGameOver" (continue)="continueAfterReveal()" />
       }
     }

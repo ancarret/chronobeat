@@ -1,10 +1,37 @@
 .setup {
-  max-width: 640px;
+  max-width: 860px;
 }
 
 h1 {
   font-size: 2rem;
   margin-bottom: 8px;
+}
+
+.lead {
+  color: var(--text-muted);
+}
+
+// One column on phones; two on wider screens, with the long chip lists spanning both.
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 48px;
+
+  @media (min-width: 800px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.span-2 {
+  @media (min-width: 800px) {
+    grid-column: span 2;
+  }
 }
 
 .field-group {
@@ -25,12 +52,6 @@ h1 {
     color: var(--text-faint);
     font-weight: 400;
   }
-}
-
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
 }
 
 .text-input {
@@ -128,7 +149,24 @@ h1 {
   margin-top: 10px;
 }
 
+// Pinned to the bottom edge on phones: the form is long and the primary action
+// should never be a scroll away. A gradient keeps the last fields readable under it.
+.start-bar {
+  position: sticky;
+  bottom: 0;
+  margin: 32px -20px 0;
+  padding: 24px 20px 16px;
+  background: linear-gradient(180deg, transparent, var(--bg) 45%);
+  z-index: 5;
+
+  @media (min-width: 800px) {
+    position: static;
+    margin: 40px 0 0;
+    padding: 0;
+    background: none;
+  }
+}
+
 .start-btn {
   width: 100%;
-  margin-top: 40px;
 }

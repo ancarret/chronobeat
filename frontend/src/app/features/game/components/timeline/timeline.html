@@ -1,4 +1,4 @@
-<div class="timeline" [class.interactive]="interactive()">
+<div class="timeline" [class.interactive]="interactive()" [class.empty-timeline]="entries().length === 0">
   @if (entries().length === 0 && !interactive()) {
     <p class="empty">Your timeline is empty.</p>
   }
@@ -9,22 +9,34 @@
         type="button"
         class="slot"
         [class.selected]="selectedPosition() === i"
-        (click)="select(i)"
+        [attr.aria-pressed]="selectedPosition() === i"
         [attr.aria-label]="selectedPosition() === i ? 'Placing here' : 'Place here'"
+        (click)="select(i, $event)"
       >
-        <span aria-hidden="true">{{ selectedPosition() === i ? '✓' : '+' }}</span>
+        @if (selectedPosition() === i) {
+          <span class="ghost">
+            <app-vinyl [size]="46" mark="?" />
+            <span>Here</span>
+          </span>
+        } @else {
+          <span class="plus" aria-hidden="true">+</span>
+        }
       </button>
+    } @else if (missPosition() === i) {
+      <div class="marker miss"><span aria-hidden="true">✗</span><small>Your pick</small></div>
+    } @else if (hintPositions().includes(i)) {
+      <div class="marker hint"><span aria-hidden="true">✓</span><small>Belongs here</small></div>
     }
 
     @if (entries()[i]; as entry) {
-      <div class="entry">
+      <div class="entry" [class.fresh]="freshPosition() === i">
+        <span class="year">{{ entry.year }}</span>
         @if (entry.artworkUrl) {
           <img [src]="entry.artworkUrl" [alt]="entry.title" class="artwork" />
         } @else {
           <div class="artwork artwork-placeholder" aria-hidden="true">♪</div>
         }
         <div class="meta">
-          <span class="year">{{ entry.year }}</span>
           <span class="title">{{ entry.title }}</span>
           <span class="artist">{{ entry.artist }}</span>
         </div>

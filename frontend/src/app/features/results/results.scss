@@ -4,13 +4,21 @@
 }
 
 .eyebrow {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.75rem;
-  color: var(--brand-primary);
-  font-weight: 600;
   margin-bottom: 10px;
+}
+
+.recap {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+
+  h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 2px;
+  }
 }
 
 h1 {
@@ -22,6 +30,8 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 880px;
+  margin: 0 auto;
   text-align: left;
 }
 

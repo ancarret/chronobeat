@@ -49,6 +49,40 @@ describe('Timeline', () => {
     expect(emitted).toEqual([1]);
   });
 
+  it('grows the selected slot into a ghost card', () => {
+    const fixture = create([entry(1977), entry(1991)]);
+    fixture.componentRef.setInput('selectedPosition', 2);
+    fixture.detectChanges();
+
+    const slots: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.slot'));
+    expect(slots[2].classList.contains('selected')).toBe(true);
+    expect(slots[2].querySelector('.ghost')).not.toBeNull();
+    expect(slots[0].querySelector('.ghost')).toBeNull();
+  });
+
+  it('highlights the freshly added entry on a correct reveal', () => {
+    const fixture = create([entry(1977), entry(1985), entry(1991)], false);
+    fixture.componentRef.setInput('freshPosition', 1);
+    fixture.detectChanges();
+
+    const cards: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.entry'));
+    expect(cards.map((c) => c.classList.contains('fresh'))).toEqual([false, true, false]);
+  });
+
+  it('marks the wrong pick and where the song belonged on a missed reveal', () => {
+    const fixture = create([entry(1977), entry(1991)], false);
+    fixture.componentRef.setInput('missPosition', 0);
+    fixture.componentRef.setInput('hintPositions', [2]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.marker.miss').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('.marker.hint').length).toBe(1);
+    // Markers sit in the slot positions: miss before the first card, hint after the last.
+    const children: HTMLElement[] = Array.from(fixture.nativeElement.querySelector('.timeline').children);
+    expect(children[0].classList.contains('miss')).toBe(true);
+    expect(children[children.length - 1].classList.contains('hint')).toBe(true);
+  });
+
   it('ignores clicks when not interactive (select() is a no-op)', () => {
     const fixture = create([entry(1977)], false);
     const emitted: number[] = [];

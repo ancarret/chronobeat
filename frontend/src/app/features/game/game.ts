@@ -15,6 +15,7 @@ import { AudioPlayer } from './components/audio-player/audio-player';
 import { Timeline } from './components/timeline/timeline';
 import { ScorePanel } from './components/score-panel/score-panel';
 import { RoundResult } from './components/round-result/round-result';
+import { Vinyl } from '../../shared/components/vinyl/vinyl';
 import { LoadingState } from '../../shared/components/loading-state/loading-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 
@@ -24,7 +25,7 @@ const MIN_GUESS_QUERY_LENGTH = 3;
 
 @Component({
   selector: 'app-game',
-  imports: [FormsModule, AudioPlayer, Timeline, ScorePanel, RoundResult, LoadingState, ErrorState],
+  imports: [FormsModule, AudioPlayer, Timeline, ScorePanel, RoundResult, Vinyl, LoadingState, ErrorState],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })
@@ -44,6 +45,8 @@ export class Game {
   protected readonly selectedPosition = signal<number | null>(null);
   protected readonly submitting = signal(false);
   protected readonly advancing = signal(false);
+  /** Mirrors the audio player so the mystery record only spins while the preview plays. */
+  protected readonly audioPlaying = signal(false);
 
   protected readonly showGuessPanel = signal(false);
   protected readonly guessQuery = signal('');
@@ -153,6 +156,7 @@ export class Game {
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: (result) => {
+          this.audioPlaying.set(false);
           this.lastResult.set(result);
           this.mergePlayer(result.player);
           this.viewState.set('revealed');

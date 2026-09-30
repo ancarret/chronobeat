@@ -1,13 +1,36 @@
+:host {
+  display: block;
+  --card-w: 112px;
+  --art: 76px;
+
+  @media (min-width: 720px) {
+    --card-w: 144px;
+    --art: 100px;
+  }
+}
+
 .timeline {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 2px 12px;
+  padding: 8px 4px 16px;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  // Auto margins centre the row when it fits and collapse when it overflows, so a
+  // long timeline is still scrollable from its first card (unlike justify-content: center).
+  > :first-child {
+    margin-left: auto;
+  }
+
+  > :last-child {
+    margin-right: auto;
+  }
 }
 
 .empty {
@@ -16,105 +39,232 @@
   padding: 24px;
   font-size: 0.9rem;
   width: 100%;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
 }
 
 .entry {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 10px;
-  width: 108px;
-  flex-shrink: 0;
-  background: var(--surface);
+  flex: 0 0 var(--card-w);
+  width: var(--card-w);
+  padding: 10px 10px 12px;
+  background: linear-gradient(180deg, var(--surface-hover), var(--surface));
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   text-align: center;
-  scroll-snap-align: start;
+  scroll-snap-align: center;
+
+  &.fresh {
+    border-color: var(--success);
+    box-shadow:
+      0 0 0 1px var(--success),
+      0 0 26px rgba(52, 211, 153, 0.35);
+    animation: card-in 0.6s var(--ease-spring) both;
+  }
+}
+
+.year {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--brand-primary);
+  line-height: 1;
 }
 
 .artwork {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: var(--art);
+  height: var(--art);
+  border-radius: 10px;
   object-fit: cover;
   flex-shrink: 0;
-  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
 }
 
 .artwork-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--bg-elevated);
   color: var(--text-faint);
-  font-size: 1.2rem;
+  font-size: 1.6rem;
 }
 
 .meta {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 2px;
   min-width: 0;
   width: 100%;
 }
 
-.year {
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: var(--brand-primary);
-  font-size: 0.85rem;
+.title,
+.artist {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .title {
   font-weight: 600;
   font-size: 0.82rem;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .artist {
   color: var(--text-muted);
   font-size: 0.76rem;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
 }
 
 .slot {
+  flex: 0 0 44px;
+  width: 44px;
+  min-height: 132px;
+  align-self: stretch;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  flex-shrink: 0;
-  align-self: stretch;
-  min-height: 92px;
+  padding: 0;
   border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-faint);
-  font-size: 1.1rem;
   cursor: pointer;
-  transition: all 0.15s ease;
   scroll-snap-align: center;
+  transition:
+    flex-basis 0.28s var(--ease-out),
+    width 0.28s var(--ease-out),
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 
-  &:hover,
+  .plus {
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      flex-basis: 58px;
+      width: 58px;
+      border-color: var(--brand-primary);
+      border-style: solid;
+      background: rgba(255, 107, 74, 0.08);
+      color: var(--brand-primary);
+    }
+  }
+
   &:focus-visible {
-    width: 40px;
     border-color: var(--brand-primary);
     border-style: solid;
-    background: rgba(255, 107, 74, 0.08);
     color: var(--brand-primary);
   }
 
+  // The chosen slot grows into a full-size ghost card so the player can see exactly
+  // where the mystery song will land.
   &.selected {
-    width: 52px;
-    border-color: var(--brand-primary);
+    flex-basis: var(--card-w);
+    width: var(--card-w);
     border-style: solid;
-    background: rgba(255, 107, 74, 0.16);
+    border-color: var(--brand-primary);
+    background: rgba(255, 107, 74, 0.12);
     color: var(--brand-primary);
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+.ghost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: card-in 0.35s var(--ease-out) both;
+}
+
+.marker {
+  flex: 0 0 88px;
+  width: 88px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 6px;
+  border-radius: var(--radius-md);
+  border: 1px dashed;
+  font-family: var(--font-display);
+  text-align: center;
+
+  span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  small {
+    font-size: 0.66rem;
     font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &.miss {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+    color: var(--danger);
+    animation: shake 0.5s ease both;
+  }
+
+  &.hint {
+    border-color: var(--success);
+    background: var(--success-bg);
+    color: var(--success);
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
   }
 }

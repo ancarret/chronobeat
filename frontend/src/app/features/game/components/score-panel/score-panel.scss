@@ -1,8 +1,9 @@
 .score-panel {
   display: flex;
-  gap: 18px;
+  align-items: center;
+  gap: 22px;
   flex-wrap: wrap;
-  padding: 14px 18px;
+  padding: 14px 20px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -22,23 +23,58 @@
 }
 
 .value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.identity {
+  .label {
+    color: var(--brand-primary);
+    font-weight: 600;
+  }
 }
 
 .value.name {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--text);
+}
+
+.hot .value {
+  color: var(--warning);
+}
+
+.flame {
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55));
+  animation: flicker 1.4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(2deg);
+  }
 }
 
 .lives {
   margin-left: auto;
+  align-items: flex-end;
 }
 
 .hearts {
-  display: flex;
   gap: 3px;
   color: var(--danger);
-  font-size: 1rem;
+  font-size: 1.05rem;
+}
+
+.heart.lost {
+  color: var(--border);
 }

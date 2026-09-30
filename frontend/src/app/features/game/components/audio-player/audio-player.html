@@ -35,7 +35,12 @@
       <div class="progress-track">
         <div class="progress-fill" [style.width.%]="progress() * 100"></div>
       </div>
-      <span class="hint">{{ hasPlayed() ? 'Mystery track' : 'Tap play to listen' }}</span>
+      <div class="meta-row">
+        <span class="hint">{{ hasPlayed() ? 'Mystery track' : 'Tap play to listen' }}</span>
+        <span class="eq" [class.on]="isPlaying()" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i>
+        </span>
+      </div>
     </div>
 
     <button type="button" class="replay-btn" (click)="replay()" aria-label="Replay from the start">

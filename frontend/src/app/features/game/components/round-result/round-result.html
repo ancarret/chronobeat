@@ -1,42 +1,58 @@
-<div class="reveal-card" [class.correct]="result().correct" [class.incorrect]="!result().correct">
-  <div class="badge">
-    {{ result().anchorRound ? 'First song' : result().correct ? 'Correct!' : 'Not quite' }}
-  </div>
+@if (celebrate()) {
+  <app-confetti />
+}
 
-  <div class="song">
-    @if (result().reveal.artworkUrl) {
-      <img [src]="result().reveal.artworkUrl" [alt]="result().reveal.title" class="artwork" />
-    } @else {
-      <div class="artwork artwork-placeholder" aria-hidden="true">♪</div>
-    }
-    <div class="song-meta">
-      <span class="year">{{ result().reveal.year }}</span>
-      <h3>{{ result().reveal.title }}</h3>
-      <p>{{ result().reveal.artist }}</p>
+<div class="reveal" [class.correct]="result().correct" [class.incorrect]="!result().correct">
+  <div class="reveal-card">
+    <div class="badge">
+      {{ result().anchorRound ? 'First song' : result().correct ? 'Correct!' : 'Not quite' }}
+    </div>
+
+    <div class="song">
+      @if (result().reveal.artworkUrl) {
+        <img [src]="result().reveal.artworkUrl" [alt]="result().reveal.title" class="artwork" />
+      } @else {
+        <div class="artwork artwork-placeholder" aria-hidden="true">♪</div>
+      }
+      <div class="song-meta">
+        <span class="year">{{ result().reveal.year }}</span>
+        <h3>{{ result().reveal.title }}</h3>
+        <p class="artist">{{ result().reveal.artist }}</p>
+
+        @if (!result().anchorRound) {
+          <p class="feedback">
+            @if (result().correct) {
+              It's in your timeline now.
+            } @else {
+              That one didn't make it into your timeline.
+            }
+          </p>
+        }
+
+        @if (result().guessCorrect !== null) {
+          <p class="guess-feedback" [class.correct]="result().guessCorrect" [class.incorrect]="!result().guessCorrect">
+            @if (result().guessCorrect) {
+              ★ Nailed the song — bonus life!
+            } @else {
+              Guess wasn't quite right.
+            }
+          </p>
+        }
+      </div>
     </div>
   </div>
 
-  @if (!result().anchorRound) {
-    <p class="feedback">
-      @if (result().correct) {
-        It's in your timeline now.
-      } @else {
-        That one didn't make it into your timeline.
-      }
-    </p>
-  }
+  <section class="recap">
+    <h3>{{ result().timeline.length === 1 ? 'Your timeline starts here' : 'Your timeline' }}</h3>
+    <app-timeline
+      [entries]="result().timeline"
+      [freshPosition]="freshPosition()"
+      [missPosition]="missPosition()"
+      [hintPositions]="hintPositions()"
+    />
+  </section>
 
-  @if (result().guessCorrect !== null) {
-    <p class="guess-feedback" [class.correct]="result().guessCorrect" [class.incorrect]="!result().guessCorrect">
-      @if (result().guessCorrect) {
-        ★ Nailed the song — bonus life!
-      } @else {
-        Guess wasn't quite right.
-      }
-    </p>
-  }
-
-  <button type="button" class="btn btn-primary continue-btn" (click)="continue.emit()">
+  <button type="button" class="btn btn-primary btn-lg continue-btn" (click)="continue.emit()">
     {{ isGameOver() ? 'See results' : 'Next round' }}
   </button>
 </div>

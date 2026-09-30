@@ -1,4 +1,4 @@
-<div class="page results-page">
+<div class="page page-wide results-page">
   @if (error(); as err) {
     <app-error-state title="Couldn't load results" [message]="err.message" (retry)="retry()" />
   } @else if (results(); as r) {
@@ -30,6 +30,13 @@
               <span class="label">Best streak</span>
             </div>
           </div>
+
+          @if (timelines()[player.id]; as entries) {
+            <div class="recap">
+              <h3>Final timeline</h3>
+              <app-timeline [entries]="entries" />
+            </div>
+          }
         </div>
       }
     </div>
