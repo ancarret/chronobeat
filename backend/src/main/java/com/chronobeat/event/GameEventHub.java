@@ -43,7 +43,7 @@ public class GameEventHub {
 
     private final Map<UUID, Set<Subscription>> subscriptions = new ConcurrentHashMap<>();
 
-    private record Subscription(SseEmitter emitter, UUID playerId) {}
+    record Subscription(SseEmitter emitter, UUID playerId) {}
 
     public GameEventHub(PresenceRegistry presence, GameEvents gameEvents) {
         this.presence = presence;
@@ -56,11 +56,15 @@ public class GameEventHub {
      * @param playerId the online player watching, used only for the "connected" indicator; null for spectators
      */
     public SseEmitter subscribe(UUID gameId, UUID playerId) {
+        return open(gameId, playerId).emitter();
+    }
+
+    Subscription open(UUID gameId, UUID playerId) {
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MILLIS);
         Subscription subscription = new Subscription(emitter, playerId);
         subscriptions.computeIfAbsent(gameId, id -> new CopyOnWriteArraySet<>()).add(subscription);
 
-        Runnable cleanup = () -> unsubscribe(gameId, subscription);
+        Runnable cleanup = () -> close(gameId, subscription);
         emitter.onCompletion(cleanup);
         emitter.onTimeout(emitter::complete);
         emitter.onError(error -> cleanup.run());
@@ -71,18 +75,21 @@ public class GameEventHub {
         if (playerId != null && presence.opened(gameId, playerId)) {
             gameEvents.publish(gameId, GameEventType.PRESENCE_CHANGED);
         }
-        return emitter;
+        return subscription;
     }
 
-    private void unsubscribe(UUID gameId, Subscription subscription) {
+    /**
+     * Forgets a stream that ended. A dead stream is reported through several paths (error, completion,
+     * our own failed send), so this must be idempotent: counting the same stream out twice would erase the
+     * presence of the player's <em>new</em> stream, opened when their browser reconnected or moved pages.
+     */
+    void close(UUID gameId, Subscription subscription) {
         Set<Subscription> forGame = subscriptions.get(gameId);
-        if (forGame != null) {
-            forGame.remove(subscription);
-            if (forGame.isEmpty()) {
-                subscriptions.remove(gameId, forGame);
-            }
+        boolean wasOpen = forGame != null && forGame.remove(subscription);
+        if (forGame != null && forGame.isEmpty()) {
+            subscriptions.remove(gameId, forGame);
         }
-        if (subscription.playerId() != null && presence.closed(gameId, subscription.playerId())) {
+        if (wasOpen && subscription.playerId() != null && presence.closed(gameId, subscription.playerId())) {
             gameEvents.publish(gameId, GameEventType.PRESENCE_CHANGED);
         }
     }
