@@ -26,6 +26,16 @@
     </p>
   }
 
+  @if (result().guessCorrect !== null) {
+    <p class="guess-feedback" [class.correct]="result().guessCorrect" [class.incorrect]="!result().guessCorrect">
+      @if (result().guessCorrect) {
+        ★ Nailed the song — bonus life!
+      } @else {
+        Guess wasn't quite right.
+      }
+    </p>
+  }
+
   <button type="button" class="btn btn-primary continue-btn" (click)="continue.emit()">
     {{ isGameOver() ? 'See results' : 'Next round' }}
   </button>

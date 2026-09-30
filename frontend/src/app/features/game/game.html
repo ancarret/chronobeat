@@ -40,9 +40,77 @@
           />
         </section>
 
-        <button type="button" class="btn btn-primary btn-lg submit-btn" [disabled]="!canSubmit || submitting()" (click)="submitAnswer()">
-          {{ submitting() ? 'Checking…' : r.anchorRound ? 'Start timeline' : 'Lock in answer' }}
-        </button>
+        <div class="answer-actions">
+          <button type="button" class="btn btn-primary btn-lg submit-btn" [disabled]="!canSubmit || submitting()" (click)="submitAnswer()">
+            {{ submitting() ? 'Checking…' : r.anchorRound ? 'Start timeline' : 'Lock in answer' }}
+          </button>
+          <button type="button" class="btn btn-secondary btn-lg guess-toggle-btn" [class.active]="guessComplete" (click)="toggleGuessPanel()">
+            @if (selectedGuessSong(); as sel) {
+              ✓ {{ sel.title }}
+            } @else {
+              Guess the song
+            }
+          </button>
+        </div>
+
+        @if (showGuessPanel()) {
+          <section class="guess-panel">
+            <p class="guess-hint">Name the exact title, artist and year for a bonus life.</p>
+
+            @if (selectedGuessSong(); as sel) {
+              <div class="guess-selected">
+                @if (sel.artworkUrl) {
+                  <img [src]="sel.artworkUrl" [alt]="sel.title" />
+                } @else {
+                  <div class="guess-selected-placeholder" aria-hidden="true">♪</div>
+                }
+                <div class="guess-selected-meta">
+                  <strong>{{ sel.title }}</strong>
+                  <span>{{ sel.artist }}</span>
+                </div>
+                <button type="button" class="btn-ghost" (click)="clearGuessSong()">Change</button>
+              </div>
+            } @else {
+              <input
+                class="text-input"
+                type="text"
+                placeholder="Search title or artist… (min. 3 letters)"
+                autocomplete="off"
+                [ngModel]="guessQuery()"
+                (ngModelChange)="onGuessQueryChange($event)"
+              />
+              @if (searchingGuess()) {
+                <p class="guess-status">Searching…</p>
+              }
+              @if (guessResults().length > 0) {
+                <ul class="guess-results">
+                  @for (s of guessResults(); track s.id) {
+                    <li>
+                      <button type="button" (click)="selectGuessSong(s)">
+                        @if (s.artworkUrl) {
+                          <img [src]="s.artworkUrl" [alt]="s.title" />
+                        } @else {
+                          <div class="guess-result-placeholder" aria-hidden="true">♪</div>
+                        }
+                        <span>{{ s.title }} — {{ s.artist }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            }
+
+            <label class="guess-year-label" for="guess-year">Year</label>
+            <input
+              id="guess-year"
+              class="text-input guess-year-input"
+              type="number"
+              placeholder="e.g. 1998"
+              [ngModel]="guessYear()"
+              (ngModelChange)="onGuessYearChange($event)"
+            />
+          </section>
+        }
       }
     }
 

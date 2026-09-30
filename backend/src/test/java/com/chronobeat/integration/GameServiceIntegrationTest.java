@@ -165,6 +165,54 @@ class GameServiceIntegrationTest {
     }
 
     @Test
+    void correctlyGuessingTheSongAwardsAnExtraLifeRegardlessOfPlacement() {
+        GameResponse created = gameService.createGame(soloGameRequest(2));
+        StartGameResponse started = gameService.startGame(created.id());
+
+        Song anchorSong =
+                gameRoundRepository.findByIdWithSong(started.currentRound().roundId()).orElseThrow().getSong();
+        RoundResultResponse anchorResult = gameService.submitAnswer(
+                created.id(),
+                started.currentRound().roundId(),
+                new AnswerRequest(null, anchorSong.getId(), anchorSong.getEffectiveYear()));
+
+        assertThat(anchorResult.guessCorrect()).isTrue();
+        assertThat(anchorResult.player().livesRemaining()).isEqualTo(3); // 2 starting + 1 bonus
+
+        RoundPendingResponse round2 = gameService.nextRound(created.id());
+        Song round2Song = gameRoundRepository.findByIdWithSong(round2.roundId()).orElseThrow().getSong();
+        UUID playerId = created.players().get(0).id();
+        int wrongIndex = findGuaranteedWrongIndex(created.id(), round2.roundId(), playerId);
+
+        // Wrong placement still loses a life, but the correct guess grants one right back.
+        RoundResultResponse result = gameService.submitAnswer(
+                created.id(),
+                round2.roundId(),
+                new AnswerRequest(wrongIndex, round2Song.getId(), round2Song.getEffectiveYear()));
+
+        assertThat(result.correct()).isFalse();
+        assertThat(result.guessCorrect()).isTrue();
+        assertThat(result.player().livesRemaining()).isEqualTo(3);
+    }
+
+    @Test
+    void incorrectGuessIsReportedAndAwardsNoExtraLife() {
+        GameResponse created = gameService.createGame(soloGameRequest(2));
+        StartGameResponse started = gameService.startGame(created.id());
+
+        UUID mysterySongId =
+                gameRoundRepository.findByIdWithSong(started.currentRound().roundId()).orElseThrow().getSong().getId();
+        Song wrongGuessSong =
+                songRepository.findAll().stream().filter(s -> !s.getId().equals(mysterySongId)).findFirst().orElseThrow();
+
+        RoundResultResponse anchorResult = gameService.submitAnswer(
+                created.id(), started.currentRound().roundId(), new AnswerRequest(null, wrongGuessSong.getId(), 1900));
+
+        assertThat(anchorResult.guessCorrect()).isFalse();
+        assertThat(anchorResult.player().livesRemaining()).isEqualTo(2);
+    }
+
+    @Test
     void gameFinishesOnceLivesAreExhaustedAndResultsBecomeAvailable() {
         GameResponse created = gameService.createGame(soloGameRequest(1));
         UUID playerId = created.players().get(0).id();

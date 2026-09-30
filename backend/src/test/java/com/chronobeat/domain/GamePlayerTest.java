@@ -59,4 +59,25 @@ class GamePlayerTest {
 
         assertThat(player.getAccuracy()).isCloseTo(2.0 / 3, org.assertj.core.data.Offset.offset(0.0001));
     }
+
+    @Test
+    void gainExtraLifeIncrementsLivesRemaining() {
+        GamePlayer player = new GamePlayer("Andres", 0, 2);
+
+        player.gainExtraLife();
+
+        assertThat(player.getLivesRemaining()).isEqualTo(3);
+    }
+
+    @Test
+    void gainExtraLifeCanReviveAnEliminatedPlayer() {
+        GamePlayer player = new GamePlayer("Andres", 0, 1);
+        player.recordIncorrectAnswer();
+        assertThat(player.isEliminated()).isTrue();
+
+        player.gainExtraLife();
+
+        assertThat(player.isEliminated()).isFalse();
+        assertThat(player.getLivesRemaining()).isEqualTo(1);
+    }
 }

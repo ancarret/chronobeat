@@ -9,6 +9,7 @@ import {
   GameResults,
   RoundPending,
   RoundResult,
+  SongSearchResult,
   StartGameResponse,
   TimelineEntry,
 } from '../models/game.model';
@@ -55,5 +56,10 @@ export class GameService {
 
   getResults(gameId: string): Observable<GameResults> {
     return this.http.get<GameResults>(`${this.base}/${gameId}/results`);
+  }
+
+  searchSongs(query: string): Observable<SongSearchResult[]> {
+    const params = new URLSearchParams({ query });
+    return this.http.get<SongSearchResult[]>(`${this.config.apiBaseUrl}/api/songs/search?${params}`);
   }
 }

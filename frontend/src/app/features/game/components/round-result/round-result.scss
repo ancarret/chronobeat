@@ -5,6 +5,17 @@
   border: 1px solid var(--border);
   text-align: center;
   animation: pop-in 0.25s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reveal-card.correct {
+  border-color: var(--success);
+  box-shadow: 0 0 0 1px var(--success), 0 0 28px rgba(52, 211, 153, 0.18);
+}
+
+.reveal-card.incorrect {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger), 0 0 28px rgba(251, 113, 133, 0.18);
 }
 
 @keyframes pop-in {
@@ -89,6 +100,20 @@
   margin-top: 20px;
   color: var(--text-muted);
   font-size: 0.92rem;
+}
+
+.guess-feedback {
+  margin-top: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+
+  &.correct {
+    color: var(--success);
+  }
+
+  &.incorrect {
+    color: var(--danger);
+  }
 }
 
 .continue-btn {

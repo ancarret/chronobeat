@@ -94,6 +94,8 @@ export interface SongReveal {
 
 export interface AnswerRequest {
   insertPosition: number | null;
+  guessedSongId?: string | null;
+  guessedYear?: number | null;
 }
 
 export interface RoundResult {
@@ -102,10 +104,20 @@ export interface RoundResult {
   anchorRound: boolean;
   submittedPosition: number | null;
   validPositions: number[];
+  /** Null when no guess was attempted; otherwise whether the guessed title/artist/year was exact. */
+  guessCorrect: boolean | null;
   reveal: SongReveal;
   player: Player;
   timeline: TimelineEntry[];
   gameStatus: GameStatus;
+}
+
+/** Result row from the in-round song search. Deliberately has no year - see backend SongSearchResultResponse. */
+export interface SongSearchResult {
+  id: string;
+  title: string;
+  artist: string;
+  artworkUrl: string | null;
 }
 
 export interface GameResults {

@@ -91,6 +91,11 @@ public class GamePlayer {
         loseLife();
     }
 
+    /** Awarded for correctly naming the mystery song (title/artist/year), independent of placement. */
+    public void gainExtraLife() {
+        this.livesRemaining++;
+    }
+
     public void addToTimeline(TimelineEntry entry) {
         timeline.add(entry);
         entry.assignToPlayer(this);

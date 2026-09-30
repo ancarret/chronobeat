@@ -172,6 +172,16 @@ public class GameService {
             }
         }
 
+        Boolean guessCorrect = null;
+        if (request.guessedSongId() != null) {
+            boolean songMatches = request.guessedSongId().equals(song.getId());
+            boolean yearMatches = request.guessedYear() != null && request.guessedYear() == mysteryYear;
+            guessCorrect = songMatches && yearMatches;
+            if (guessCorrect) {
+                player.gainExtraLife();
+            }
+        }
+
         round.resolve(resolvedPosition, correct);
         gameRoundRepository.save(round);
 
@@ -185,6 +195,7 @@ public class GameService {
                 round.isAnchorRound(),
                 resolvedPosition,
                 validPositions,
+                guessCorrect,
                 gameMapper.toSongRevealResponse(song),
                 gameMapper.toPlayerResponse(player),
                 sortedTimeline(player),
