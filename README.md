@@ -1,15 +1,40 @@
-# Chronobeat
+# Chronobeat 🎵
 
 **A chronological music game: hear a mystery song, guess where it belongs on your timeline before the title, artist or year are revealed.**
 
+Solo, around one shared phone, or online from separate devices with a room code — drawing from a
+catalog of thousands of real songs instead of a fixed deck you end up memorising.
+
+**[Try it live → chronobeat.pages.dev](https://chronobeat.pages.dev)**
+
+<sub>The backend runs on Render's free tier: after ~15 minutes without traffic it sleeps, and the
+first request takes 30–50 s to wake it up. After that it's fast.</sub>
+
+![Java](https://img.shields.io/badge/Java-21-e76f00)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6db33f)
+![Angular](https://img.shields.io/badge/Angular-21-dd0031)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ed)
+![Tests](https://img.shields.io/badge/tests-90%20backend%20%C2%B7%2092%20frontend-brightgreen)
+
+<img src="docs/media/demo.gif" width="100%" alt="Chronobeat demo: home, game setup, placing songs on the timeline with reveals, and an online room's lobby">
+
+*Home → setting up a solo game → a preview plays and you place it on your timeline → the reveal
+(right or wrong) → opening an online room that friends join with a 4-letter code.*
+
 This is an original portfolio project inspired by the general concept of physical music-chronology party games. It does not use any third-party brand's name, artwork, card design or database — it's built from scratch on top of Apple's public iTunes Search API for song metadata and 30-second previews.
+
+<details>
+<summary>More screenshots</summary>
 
 | | | |
 |---|---|---|
 | ![Home](docs/screenshots/home.png) | ![Setup](docs/screenshots/setup.png) | ![Online lobby](docs/screenshots/lobby.png) |
 | ![Placing a card](docs/screenshots/gameplay.png) | ![Round reveal](docs/screenshots/reveal.png) | |
 
-<sub>Screenshots are from an actual running instance of this repo, seeded with real Apple Music catalog data: the home screen, a shared-device game being set up, an online room's lobby, placing a card, and the reveal with two players.</sub>
+<sub>The home screen, a shared-device game being set up, an online room's lobby, placing a card, and the reveal with two players.</sub>
+
+</details>
 
 ## Why this exists
 
@@ -324,13 +349,45 @@ Both `backend/Dockerfile` and `frontend/Dockerfile` are multi-stage and run as a
 
 ## Deployment
 
-| Layer | Target | Notes |
+Live at **[chronobeat.pages.dev](https://chronobeat.pages.dev)**, on three free hosts — each piece
+on the one that suits it, since a static bundle, a long-running JVM and a stateful database rarely
+fit the same free plan:
+
+| Layer | Host | How |
 |---|---|---|
-| Frontend | Cloudflare Pages | Build command `npm run build`, output dir `dist/frontend/browser`. Set `API_BASE_URL` (via a Pages build-time env var feeding a small pre-build step, since static hosting has no server-side entrypoint) to your Render backend's public URL. |
-| Backend | Render | Deploy `backend/Dockerfile` as a Docker web service. Set `DATABASE_URL`/`DATABASE_USERNAME`/`DATABASE_PASSWORD` (Neon), `FRONTEND_URL` (your Cloudflare Pages URL, no wildcard), `ADMIN_INGEST_KEY`, `SPRING_PROFILES_ACTIVE=prod`. Render sets `PORT` automatically; `application.yml` already reads it. |
-| Database | Neon PostgreSQL | Use the **JDBC** connection string form with `?sslmode=require`. Flyway migrates automatically on backend startup — no manual step. |
+| Frontend | Cloudflare Pages | `npm run build:cloudflare-pages` from `frontend/`, output `dist/frontend/browser`. Pages serves `index.html` for unknown paths (SPA routing) and applies [`public/_headers`](frontend/public/_headers) (CSP and other security headers). |
+| Backend | Render (free, Docker) | [`render.yaml`](render.yaml) Blueprint: builds `backend/Dockerfile`, health check on `/actuator/health`, redeploys on every push to `main`. |
+| Database | Neon (free Postgres) | Direct (non-pooled) connection, so Flyway's migrations run normally at startup. |
+
+`git push` to `main` → GitHub Actions validates (backend tests, frontend tests and build, both
+Docker images) while Cloudflare and Render build and deploy through their own GitHub integrations.
+
+**Runtime config without a container.** Locally, `docker-entrypoint.sh` regenerates `env.js` from
+`API_BASE_URL` when the nginx container starts. Pages has no entrypoint, so
+[`scripts/write-env.mjs`](frontend/scripts/write-env.mjs) does the same right after `ng build`,
+from a build variable — and fails the build if it's missing, rather than shipping a bundle that
+points at `localhost`.
+
+**Secrets and environment.** Everything environment-specific is an env var
+(`DATABASE_URL`/`_USERNAME`/`_PASSWORD`, `FRONTEND_URL`, `ADMIN_INGEST_KEY`). Credentials are typed
+into the Render dashboard (`sync: false`), never committed; the admin key is generated by Render.
+The `prod` profile has no fallbacks, so a missing variable stops the app at startup instead of
+connecting somewhere unexpected. CORS allows exactly the Pages origin; the CSP's `connect-src`
+allows exactly the backend.
+
+**Region matters.** The backend and the database both run in Frankfurt. The first deploy landed in
+Render's default region (Oregon) with Neon in Frankfurt, and every SQL round trip crossed the
+Atlantic: a one-query request took ~810 ms and dealing the next round ~3.6 s. In the same region
+the one-query request takes ~90 ms. A service's region can't be changed on Render, so the fix was
+`region: frankfurt` in the Blueprint and recreating the service.
 
 `CatalogBootstrapRunner` is disabled under the `prod` profile on purpose: catalog growth in production should be a deliberate, observed `POST /api/admin/catalog/ingest/seed` call, not an unattended startup side effect.
+
+### Free-tier trade-offs
+
+- **Cold starts**: Render's free service sleeps after ~15 minutes idle; the first request then takes 30–50 s. Fine for a portfolio demo, not for real users.
+- **0.1 CPU**: dealing a round loads every candidate song to pick one at random, which takes ~1–2 s on this instance. Selecting in SQL (or loading only ids, years and artists) is the obvious next optimisation.
+- **One instance, no high availability**: the live-event hub is in memory (see [Live updates](#live-updates-notify-then-re-fetch)). Zero cost in exchange for occasional latency.
 
 ## Known limitations
 
