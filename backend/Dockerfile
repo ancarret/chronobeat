@@ -4,7 +4,8 @@ WORKDIR /workspace
 
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
-RUN chmod +x mvnw && ./mvnw -q -o dependency:go-offline || ./mvnw -q dependency:go-offline
+# Resolve dependencies before copying src, so this layer is cached until pom.xml changes.
+RUN chmod +x mvnw && ./mvnw -q dependency:go-offline
 
 COPY src src
 RUN ./mvnw -q clean package -DskipTests
