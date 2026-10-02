@@ -7,6 +7,9 @@ services:
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     plan: free
+    # Same region as the Neon database (AWS eu-central-1). Render defaults to Oregon, which put an
+    # Atlantic round trip on every SQL query. It can't be changed after creation.
+    region: frankfurt
     # Actuator's health endpoint (see management.endpoints in application.yml).
     healthCheckPath: /actuator/health
     envVars:
