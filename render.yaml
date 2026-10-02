@@ -1,0 +1,28 @@
+# Render Blueprint: Render -> New -> Blueprint, pick this repo. It builds the backend straight from
+# backend/Dockerfile and redeploys on every push to main.
+services:
+  - type: web
+    name: chronobeat-backend
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    plan: free
+    # Actuator's health endpoint (see management.endpoints in application.yml).
+    healthCheckPath: /actuator/health
+    envVars:
+      # prod fails fast at startup if a required variable is missing (application-prod.yml).
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # sync: false -> typed by hand in the Render dashboard, never committed.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      # Exact origin of the Cloudflare frontend, e.g. https://chronobeat.pages.dev (no trailing slash).
+      - key: FRONTEND_URL
+        sync: false
+      # Render generates a random high-entropy value; read it from the dashboard to call the admin API.
+      - key: ADMIN_INGEST_KEY
+        generateValue: true

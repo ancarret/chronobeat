@@ -19,6 +19,9 @@ spring:
 
 server:
   port: ${PORT:8080}
+  # Behind Render's proxy the TCP peer is the proxy itself; honour X-Forwarded-* so the app sees the
+  # real client IP and the https scheme.
+  forward-headers-strategy: framework
 
 management:
   endpoints:

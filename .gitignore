@@ -16,5 +16,8 @@ Thumbs.db
 !.vscode/extensions.json
 *.iml
 
+# Personal study notes, not part of the project
+docs/guia-de-estudio/
+
 # Scratch
 *.log

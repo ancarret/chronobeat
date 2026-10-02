@@ -1,0 +1,8 @@
+{
+  "name": "chronobeat-frontend",
+  "compatibility_date": "2026-10-02",
+  "assets": {
+    "directory": "./dist/frontend/browser",
+    "not_found_handling": "single-page-application"
+  }
+}
